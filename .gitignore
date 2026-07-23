@@ -1,0 +1,4 @@
+.lake/
+.build/
+_out/
+.DS_Store
