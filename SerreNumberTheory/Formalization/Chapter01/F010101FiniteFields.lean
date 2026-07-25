@@ -615,6 +615,31 @@ theorem frobeniusFixedSubfield_natCard
       simpa [P] using
         frobeniusPolynomial_rootSet_card Ω p f hf
 
+/--
+`p ^ f`個の元を持つ`Ω`の有限部分体は，
+`frobeniusFixedSubfield Ω p f`に含まれる．
+-/
+theorem subfield_le_frobeniusFixedSubfield
+    (L : Subfield Ω)
+    [Fintype L]
+    (hcard : Fintype.card L = p ^ f) :
+    L ≤ frobeniusFixedSubfield Ω p f := by
+  intro x hx
+
+  rw [mem_frobeniusFixedSubfield_iff]
+
+  let y : L := ⟨x, hx⟩
+
+  have hy :
+      y ^ Fintype.card L = y := by
+    exact FiniteField.pow_card y
+
+  have hyΩ :
+      (y : Ω) ^ Fintype.card L = (y : Ω) := by
+    exact congrArg ((↑) : L → Ω) hy
+
+  simpa [y, hcard] using hyΩ
+
 end FiniteSubfieldInAlgebraicClosure
 
 end SerreNumberTheory
