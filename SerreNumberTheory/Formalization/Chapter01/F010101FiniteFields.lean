@@ -469,6 +469,57 @@ theorem frobeniusPolynomial_separable
 
   simpa [sub_eq_add_neg] using hsep
 
+omit [CharP Ω p] in
+/--
+`f ≠ 0`ならば，
+`X ^ (p ^ f) - X`の次数は`p ^ f`である．
+-/
+theorem frobeniusPolynomial_natDegree
+    (hf : f ≠ 0) :
+    (Polynomial.X ^ (p ^ f) - Polynomial.X :
+      Polynomial Ω).natDegree = p ^ f := by
+  have hp_one_lt : 1 < p :=
+    (Fact.out : Nat.Prime p).one_lt
+
+  have hpow_one_lt : 1 < p ^ f := by
+    exact Nat.one_lt_pow hf hp_one_lt
+
+  calc
+    (Polynomial.X ^ (p ^ f) - Polynomial.X :
+        Polynomial Ω).natDegree
+        =
+        (Polynomial.X ^ (p ^ f) :
+          Polynomial Ω).natDegree := by
+      apply Polynomial.natDegree_sub_eq_left_of_natDegree_lt
+      simpa using hpow_one_lt
+
+    _ = p ^ f := by
+      exact Polynomial.natDegree_X_pow (p ^ f)
+
+/--
+代数閉体`Ω`において，
+`X ^ (p ^ f) - X`の異なる根の個数は`p ^ f`である．
+-/
+theorem frobeniusPolynomial_rootSet_card
+    [IsAlgClosed Ω]
+    (hf : f ≠ 0) :
+    Fintype.card
+      ↑((Polynomial.X ^ (p ^ f) - Polynomial.X :
+          Polynomial Ω).rootSet Ω)
+      = p ^ f := by
+  calc
+    Fintype.card
+        ↑((Polynomial.X ^ (p ^ f) - Polynomial.X :
+            Polynomial Ω).rootSet Ω)
+        =
+        (Polynomial.X ^ (p ^ f) - Polynomial.X :
+          Polynomial Ω).natDegree := by
+      apply Polynomial.card_rootSet_eq_natDegree
+      · exact frobeniusPolynomial_separable Ω p f hf
+      · simpa using frobeniusPolynomial_splits Ω p f
+    _ = p ^ f :=
+      frobeniusPolynomial_natDegree Ω p f hf
+
 end FiniteSubfieldInAlgebraicClosure
 
 end SerreNumberTheory
