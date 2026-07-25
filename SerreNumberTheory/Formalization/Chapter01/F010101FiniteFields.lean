@@ -434,6 +434,41 @@ theorem mem_frobeniusFixedSubfield_iff_isRoot
   · intro hx
     exact sub_eq_zero.mp hx
 
+omit [Fact p.Prime] [CharP Ω p] in
+/--
+代数閉体`Ω`上で，
+`X ^ (p ^ f) - X`は完全に分解する．
+-/
+theorem frobeniusPolynomial_splits
+    [IsAlgClosed Ω] :
+    (Polynomial.X ^ (p ^ f) - Polynomial.X :
+      Polynomial Ω).Splits := by
+  exact IsAlgClosed.splits _
+
+omit [Fact p.Prime] in
+/--
+標数`p`において，
+`X ^ (p ^ f) - X`は分離多項式である．
+-/
+theorem frobeniusPolynomial_separable
+    (hf : f ≠ 0) :
+    (Polynomial.X ^ (p ^ f) - Polynomial.X :
+      Polynomial Ω).Separable := by
+  have hp_dvd : p ∣ p ^ f := by
+    exact dvd_pow_self p hf
+
+  have hsep :=
+    Polynomial.separable_C_mul_X_pow_add_C_mul_X_add_C'
+      p
+      (p ^ f)
+      (1 : Ω)
+      (-1 : Ω)
+      (0 : Ω)
+      hp_dvd
+      isUnit_neg_one
+
+  simpa [sub_eq_add_neg] using hsep
+
 end FiniteSubfieldInAlgebraicClosure
 
 end SerreNumberTheory
