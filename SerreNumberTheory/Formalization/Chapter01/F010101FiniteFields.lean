@@ -307,4 +307,36 @@ theorem galoisField_setOf_isRoot_eq_univ
 
 end GaloisField
 
+/-!
+# 有限体の一意性
+-/
+
+section FiniteFieldUniqueness
+
+variable (K : Type*) [Field K] [Fintype K]
+variable (p f : ℕ) [Fact p.Prime] [CharP K p]
+
+local instance : Algebra (ZMod p) K :=
+  ZMod.algebra K p
+
+/--
+位数が`p ^ f`である有限体`K`は，
+`GaloisField p f`と`ZMod p`上代数同型である．
+-/
+noncomputable def finiteFieldAlgEquivGaloisField
+    (hcard : Fintype.card K = p ^ f) :
+    K ≃ₐ[ZMod p] GaloisField p f :=
+  GaloisField.algEquivGaloisFieldOfFintype p f hcard
+
+/--
+位数が`p ^ f`である有限体`K`は，
+`GaloisField p f`と環同型である．
+-/
+noncomputable def finiteFieldRingEquivGaloisField
+    (hcard : Fintype.card K = p ^ f) :
+    K ≃+* GaloisField p f :=
+  (finiteFieldAlgEquivGaloisField K p f hcard).toRingEquiv
+
+end FiniteFieldUniqueness
+
 end SerreNumberTheory
