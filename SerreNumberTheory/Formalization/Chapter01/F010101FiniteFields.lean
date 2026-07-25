@@ -711,6 +711,44 @@ theorem subfield_eq_frobeniusFixedSubfield
 
     rw [hfixed, hL]
 
+/--
+代数閉体`Ω`の中には，`p ^ f`個の元を持つ部分体が一意に存在する．
+その部分体は`frobeniusFixedSubfield Ω p f`である．
+-/
+theorem existsUnique_subfield_natCard_eq_pow
+    [IsAlgClosed Ω]
+    (hf : f ≠ 0) :
+    ∃! L : Subfield Ω,
+      Nat.card L = p ^ f := by
+  refine
+    ⟨frobeniusFixedSubfield Ω p f,
+      frobeniusFixedSubfield_natCard Ω p f hf,
+      ?_⟩
+
+  intro L hL
+
+  have hpow_pos : 0 < p ^ f := by
+    exact pow_pos (Fact.out : Nat.Prime p).pos f
+
+  have hL_ne : Nat.card L ≠ 0 := by
+    rw [hL]
+    exact ne_of_gt hpow_pos
+
+  letI : Finite L :=
+    Nat.finite_of_card_ne_zero hL_ne
+
+  letI : Fintype L :=
+    Fintype.ofFinite L
+
+  have hcard :
+      Fintype.card L = p ^ f := by
+    rw [← Nat.card_eq_fintype_card]
+    exact hL
+
+  exact
+    subfield_eq_frobeniusFixedSubfield
+      Ω p f L hf hcard
+
 end FiniteSubfieldInAlgebraicClosure
 
 end SerreNumberTheory
