@@ -22,7 +22,7 @@ variable (p : ℕ) [CharP K p]
 
 include K in
 /--
-体の標数は素数または `0` である。
+体の標数は素数または `0` である．
 -/
 theorem field_char_is_prime_or_zero :
     Nat.Prime p ∨ p = 0 := by
@@ -185,16 +185,22 @@ end Frobenius
 
 section FiniteFieldCardinality
 
-variable (K : Type*) [Field K] [Fintype K]
-variable (p : ℕ) [Fact p.Prime] [CharP K p]
-
 /--
-標数 `p` の有限体 `K` の元の個数は、
-素体 `ZMod p` 上の次元を指数とする `p` の冪である。
+有限体の標数は素数である．
 -/
-theorem finiteField_card_eq_pow_finrank :
-    Fintype.card K =
-      p ^ Module.finrank (ZMod p) K := by
+theorem finiteField_char_is_prime
+    (K : Type*) [Field K] [Fintype K]
+    (p : ℕ) [CharP K p] :
+    Nat.Prime p := by
+  rcases field_char_is_prime_or_zero K p with hp | hp
+  · -- p=素数
+    exact hp
+  · -- p=0
+    exact (CharP.char_ne_zero_of_finite K p hp).elim -- elim：矛盾Falseから任意の命題を導く
+
+variable (K : Type*) [Field K] [Fintype K] -- Kは有限体
+variable (p : ℕ) [Fact p.Prime] [CharP K p] --有限体Kの標数は素数p
+
 
 end FiniteFieldCardinality
 
