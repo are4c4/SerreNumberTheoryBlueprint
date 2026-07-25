@@ -584,6 +584,36 @@ theorem frobeniusFixedSubfield_carrier_eq_rootSet
 
     simpa [P, Polynomial.IsRoot] using hx'.2
 
+/--
+代数閉体`Ω`の部分体`frobeniusFixedSubfield Ω p f`は，
+`p ^ f`個の元を持つ．
+-/
+theorem frobeniusFixedSubfield_natCard
+    [IsAlgClosed Ω]
+    (hf : f ≠ 0) :
+    Nat.card (frobeniusFixedSubfield Ω p f) = p ^ f := by
+  let P : Polynomial Ω :=
+    Polynomial.X ^ (p ^ f) - Polynomial.X
+
+  let e :
+      frobeniusFixedSubfield Ω p f
+        ≃
+      ↑(P.rootSet Ω) := by
+    exact Equiv.setCongr
+      (frobeniusFixedSubfield_carrier_eq_rootSet Ω p f hf)
+
+  calc
+    Nat.card (frobeniusFixedSubfield Ω p f)
+        =
+        Nat.card ↑(P.rootSet Ω) := by
+      exact Nat.card_congr e
+
+    _ = Fintype.card ↑(P.rootSet Ω) := by
+      exact Nat.card_eq_fintype_card
+
+    _ = p ^ f := by
+      simpa [P] using
+        frobeniusPolynomial_rootSet_card Ω p f hf
 
 end FiniteSubfieldInAlgebraicClosure
 
