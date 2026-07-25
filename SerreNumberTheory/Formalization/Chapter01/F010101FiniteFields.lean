@@ -287,6 +287,24 @@ theorem galoisField_isRoot_X_pow_sub_X
 
   exact sub_eq_zero.mpr (galoisField_pow_eq_self p f hf x)
 
+/--
+`GaloisField p f`の元全体は，
+`X ^ (p ^ f) - X`の根全体である．
+-/
+theorem galoisField_setOf_isRoot_eq_univ
+    (hf : f ≠ 0) :
+    {x : GaloisField p f |
+      Polynomial.IsRoot
+        (Polynomial.X ^ (p ^ f) - Polynomial.X)
+        x}
+      = Set.univ := by
+  ext x
+  constructor
+  · intro hx
+    exact Set.mem_univ x
+  · intro hx
+    exact galoisField_isRoot_X_pow_sub_X p f hf x
+
 end GaloisField
 
 end SerreNumberTheory
