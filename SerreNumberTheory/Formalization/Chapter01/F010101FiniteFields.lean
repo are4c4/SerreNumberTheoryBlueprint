@@ -265,6 +265,28 @@ theorem galoisField_pow_eq_self
   rw [← hcard]
   exact FiniteField.pow_card x
 
+/--
+`GaloisField p f`の任意の元は，
+`X ^ (p ^ f) - X`の根である．
+-/
+theorem galoisField_isRoot_X_pow_sub_X
+    (hf : f ≠ 0)
+    (x : GaloisField p f) :
+    Polynomial.IsRoot
+      (Polynomial.X ^ (p ^ f) - Polynomial.X)
+      x := by
+  change
+    Polynomial.eval x
+        (Polynomial.X ^ (p ^ f) - Polynomial.X) = 0
+
+  rw [
+    Polynomial.eval_sub,
+    Polynomial.eval_pow,
+    Polynomial.eval_X
+  ]
+
+  exact sub_eq_zero.mpr (galoisField_pow_eq_self p f hf x)
+
 end GaloisField
 
 end SerreNumberTheory
