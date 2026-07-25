@@ -214,6 +214,25 @@ theorem finiteField_card_eq_pow_finrank :
   exact (FiniteField.pow_finrank_eq_card p K).symm
 
 
+/-!
+# Galois体
+-/
+
+section GaloisField
+
+variable (p f : ℕ) [Fact p.Prime]
+
+/--
+`f ≠ 0`ならば，`GaloisField p f`の位数は`p ^ f`である．
+-/
+theorem galoisField_card
+    (hf : f ≠ 0) :
+    Nat.card (GaloisField p f) = p ^ f := by
+  exact GaloisField.card p f hf
+
+end GaloisField
+
+
 end FiniteFieldCardinality
 
 end SerreNumberTheory
