@@ -243,6 +243,28 @@ theorem galoisField_isSplittingField
   apply FiniteField.isSplittingField_of_nat_card_eq p f
   exact galoisField_card p f hf
 
+/--
+`GaloisField p f`の任意の元は，
+`p ^ f`乗しても変わらない．
+-/
+theorem galoisField_pow_eq_self
+    (hf : f ≠ 0)
+    (x : GaloisField p f) :
+    x ^ (p ^ f) = x := by
+  letI := Fintype.ofFinite (GaloisField p f)
+
+  have hcard :
+      Fintype.card (GaloisField p f) = p ^ f := by
+    calc
+      Fintype.card (GaloisField p f)
+          = Nat.card (GaloisField p f) := by
+              exact Nat.card_eq_fintype_card.symm
+      _ = p ^ f := by
+            exact GaloisField.card p f hf
+
+  rw [← hcard]
+  exact FiniteField.pow_card x
+
 end GaloisField
 
 end SerreNumberTheory
