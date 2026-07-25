@@ -201,6 +201,18 @@ theorem finiteField_char_is_prime
 variable (K : Type*) [Field K] [Fintype K] -- Kは有限体
 variable (p : ℕ) [Fact p.Prime] [CharP K p] --有限体Kの標数は素数p
 
+local instance : Algebra (ZMod p) K :=
+  ZMod.algebra K p
+
+/--
+標数 `p` の有限体 `K` の位数は，
+`ZMod p` 上の次元を指数とする `p` の冪である．
+-/
+theorem finiteField_card_eq_pow_finrank :
+    Fintype.card K =
+      p ^ Module.finrank (ZMod p) K := by
+  exact (FiniteField.pow_finrank_eq_card p K).symm
+
 
 end FiniteFieldCardinality
 
