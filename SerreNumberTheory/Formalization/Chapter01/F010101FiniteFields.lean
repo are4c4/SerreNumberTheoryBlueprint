@@ -640,6 +640,77 @@ theorem subfield_le_frobeniusFixedSubfield
 
   simpa [y, hcard] using hyΩ
 
+/--
+代数閉体`Ω`において，`p ^ f`個の元を持つ部分体は，
+`frobeniusFixedSubfield Ω p f`に等しい．
+-/
+theorem subfield_eq_frobeniusFixedSubfield
+    [IsAlgClosed Ω]
+    (L : Subfield Ω)
+    [Fintype L]
+    (hf : f ≠ 0)
+    (hcard : Fintype.card L = p ^ f) :
+    L = frobeniusFixedSubfield Ω p f := by
+  let P : Polynomial Ω :=
+    Polynomial.X ^ (p ^ f) - Polynomial.X
+
+  let e :
+      frobeniusFixedSubfield Ω p f
+        ≃
+      ↑(P.rootSet Ω) := by
+    exact Equiv.setCongr
+      (frobeniusFixedSubfield_carrier_eq_rootSet Ω p f hf)
+
+  letI : Fintype (frobeniusFixedSubfield Ω p f) :=
+    Fintype.ofEquiv
+      ↑(P.rootSet Ω)
+      e.symm
+
+  apply SetLike.coe_injective
+  apply Set.eq_of_subset_of_card_le
+
+  · exact subfield_le_frobeniusFixedSubfield Ω p f L hcard
+
+  · let eFixed :
+        ↥((frobeniusFixedSubfield Ω p f : Subfield Ω) : Set Ω)
+          ≃
+        frobeniusFixedSubfield Ω p f :=
+      Equiv.refl _
+
+    let eL :
+        ↥((L : Subfield Ω) : Set Ω) ≃ L :=
+      Equiv.refl _
+
+    have hfixed :
+        Fintype.card
+            ↥((frobeniusFixedSubfield Ω p f :
+                Subfield Ω) : Set Ω)
+          =
+        p ^ f := by
+      calc
+        Fintype.card
+            ↥((frobeniusFixedSubfield Ω p f :
+                Subfield Ω) : Set Ω)
+            =
+            Fintype.card
+              (frobeniusFixedSubfield Ω p f) := by
+              exact Fintype.card_congr eFixed
+        _ = p ^ f := by
+              rw [← Nat.card_eq_fintype_card]
+              exact frobeniusFixedSubfield_natCard Ω p f hf
+
+    have hL :
+        Fintype.card ↥((L : Subfield Ω) : Set Ω)
+          =
+        p ^ f := by
+      calc
+        Fintype.card ↥((L : Subfield Ω) : Set Ω)
+            = Fintype.card L := by
+                exact Fintype.card_congr eL
+        _ = p ^ f := hcard
+
+    rw [hfixed, hL]
+
 end FiniteSubfieldInAlgebraicClosure
 
 end SerreNumberTheory
