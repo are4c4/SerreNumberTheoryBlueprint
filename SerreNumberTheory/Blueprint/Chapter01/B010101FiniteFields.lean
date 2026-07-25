@@ -18,7 +18,7 @@ import Verso
 import VersoManual
 import VersoBlueprint
 
-import SerreNumberTheory.Formalization.Chapter01.S010101FiniteFields.lean
+import SerreNumberTheory.Formalization.Chapter01.F010101FiniteFields
 
 open Verso.Genre
 open Verso.Genre.Manual

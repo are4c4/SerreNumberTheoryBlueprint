@@ -6,7 +6,7 @@ import VersoBlueprint
 import VersoBlueprint.Commands.Graph
 import VersoBlueprint.Commands.Summary
 
-import ProjectTemplate.Chapters.Frobenius
+import SerreNumberTheory.Blueprint.Chapter01.B010101FiniteFields
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -17,7 +17,7 @@ open Informal
 この文書では、セール『数論講義』に現れる定義・命題・定理を
 Lean 4とmathlibを用いて形式化する。
 
-{include 0 ProjectTemplate.Chapters.Frobenius}
+{include 0 SerreNumberTheory.Blueprint.Chapter01.B010101FiniteFields}
 
 # 定理の依存関係
 

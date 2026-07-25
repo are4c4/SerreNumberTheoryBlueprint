@@ -1,12 +1,12 @@
 import VersoManual
 import VersoBlueprint.PreviewManifest
-import ProjectTemplate.Blueprint
+import SerreNumberTheory.Blueprint
 
 open Verso Doc
 open Verso.Genre Manual
 
 def main (args : List String) : IO UInt32 :=
   Informal.PreviewManifest.blueprintMainWithPreviewData
-    (%doc ProjectTemplate.Blueprint)
+    (%doc SerreNumberTheory.Blueprint)
     args
     (extensionImpls := by exact extension_impls%)
