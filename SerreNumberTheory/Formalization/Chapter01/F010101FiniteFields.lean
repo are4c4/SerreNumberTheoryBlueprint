@@ -178,7 +178,6 @@ end Equivalence
 
 end Frobenius
 
-
 /-!
 # 有限体の位数
 -/
@@ -213,6 +212,7 @@ theorem finiteField_card_eq_pow_finrank :
       p ^ Module.finrank (ZMod p) K := by
   exact (FiniteField.pow_finrank_eq_card p K).symm
 
+end FiniteFieldCardinality
 
 /-!
 # Galois体
@@ -230,9 +230,19 @@ theorem galoisField_card
     Nat.card (GaloisField p f) = p ^ f := by
   exact GaloisField.card p f hf
 
+/--
+`GaloisField p f`は，`ZMod p`上で
+`X ^ (p ^ f) - X`の分解体である．
+-/
+theorem galoisField_isSplittingField
+    (hf : f ≠ 0) :
+    Polynomial.IsSplittingField
+      (ZMod p)
+      (GaloisField p f)
+      (Polynomial.X ^ (p ^ f) - Polynomial.X) := by
+  apply FiniteField.isSplittingField_of_nat_card_eq p f
+  exact galoisField_card p f hf
+
 end GaloisField
-
-
-end FiniteFieldCardinality
 
 end SerreNumberTheory
