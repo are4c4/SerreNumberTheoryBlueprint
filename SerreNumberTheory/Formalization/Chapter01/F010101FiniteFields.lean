@@ -1,3 +1,12 @@
+/-
+githubへの変更手順
+
+git add .
+git commit -m "変更内容"
+git push
+-/
+
+
 import Mathlib
 
 namespace SerreNumberTheory

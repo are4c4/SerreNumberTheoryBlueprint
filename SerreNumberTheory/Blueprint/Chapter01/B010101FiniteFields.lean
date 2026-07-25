@@ -18,7 +18,7 @@ import Verso
 import VersoManual
 import VersoBlueprint
 
-import ProjectTemplate.Formalization.Chapter01.Frobenius
+import SerreNumberTheory.Formalization.Chapter01.S010101FiniteFields.lean
 
 open Verso.Genre
 open Verso.Genre.Manual

@@ -7,9 +7,9 @@ require VersoBlueprint from git
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @ "v4.32.0"
 
-package ProjectTemplate where
+package SerreNumberTheory where
   precompileModules := false
   leanOptions := #[⟨`experimental.module, true⟩]
 
 @[default_target]
-lean_lib ProjectTemplate where
+lean_lib SerreNumberTheory where
