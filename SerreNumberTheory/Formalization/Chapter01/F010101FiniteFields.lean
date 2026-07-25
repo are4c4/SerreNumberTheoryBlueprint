@@ -391,6 +391,49 @@ def frobeniusFixedSubfield : Subfield Ω where
     rw [iterateFrobenius_def] at hx ⊢
     rw [inv_pow, hx]
 
+/--
+`x`が`frobeniusFixedSubfield Ω p f`に属することと，
+`x ^ (p ^ f) = x`であることは同値である．
+-/
+@[simp]
+theorem mem_frobeniusFixedSubfield_iff
+    (x : Ω) :
+    x ∈ frobeniusFixedSubfield Ω p f ↔
+      x ^ (p ^ f) = x := by
+  change
+    (iterateFrobenius Ω p f) x = x ↔
+      x ^ (p ^ f) = x
+  rw [iterateFrobenius_def]
+
+/--
+`x`が`frobeniusFixedSubfield Ω p f`に属することと，
+`X ^ (p ^ f) - X`の根であることは同値である．
+-/
+theorem mem_frobeniusFixedSubfield_iff_isRoot
+    (x : Ω) :
+    x ∈ frobeniusFixedSubfield Ω p f ↔
+      Polynomial.IsRoot
+        (Polynomial.X ^ (p ^ f) - Polynomial.X)
+        x := by
+  rw [mem_frobeniusFixedSubfield_iff]
+
+  change
+    x ^ (p ^ f) = x ↔
+      Polynomial.eval x
+        (Polynomial.X ^ (p ^ f) - Polynomial.X) = 0
+
+  rw [
+    Polynomial.eval_sub,
+    Polynomial.eval_pow,
+    Polynomial.eval_X
+  ]
+
+  constructor
+  · intro hx
+    exact sub_eq_zero.mpr hx
+  · intro hx
+    exact sub_eq_zero.mp hx
+
 end FiniteSubfieldInAlgebraicClosure
 
 end SerreNumberTheory
