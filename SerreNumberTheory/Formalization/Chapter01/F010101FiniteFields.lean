@@ -520,6 +520,71 @@ theorem frobeniusPolynomial_rootSet_card
     _ = p ^ f :=
       frobeniusPolynomial_natDegree Ω p f hf
 
+/--
+`frobeniusFixedSubfield Ω p f`の台集合は，
+`X ^ (p ^ f) - X`の根集合と一致する．
+-/
+theorem frobeniusFixedSubfield_carrier_eq_rootSet
+    [IsAlgClosed Ω]
+    (hf : f ≠ 0) :
+    (frobeniusFixedSubfield Ω p f : Set Ω)
+      =
+    ↑((Polynomial.X ^ (p ^ f) - Polynomial.X :
+        Polynomial Ω).rootSet Ω) := by
+  let P : Polynomial Ω :=
+    Polynomial.X ^ (p ^ f) - Polynomial.X
+
+  have hP_degree :
+      P.natDegree = p ^ f := by
+    exact frobeniusPolynomial_natDegree Ω p f hf
+
+  have hp_one_lt : 1 < p :=
+    (Fact.out : Nat.Prime p).one_lt
+
+  have hpow_one_lt : 1 < p ^ f := by
+    exact Nat.one_lt_pow hf hp_one_lt
+
+  have hP_ne : P ≠ 0 := by
+    intro hP
+    rw [hP] at hP_degree
+    simp at hP_degree
+
+    have hpow_ne : p ^ f ≠ 0 :=
+      ne_of_gt (lt_trans Nat.zero_lt_one hpow_one_lt)
+
+    exact hpow_ne hP_degree.symm
+
+  ext x
+
+  change
+    (x ∈ frobeniusFixedSubfield Ω p f) ↔
+      x ∈ P.rootSet Ω
+
+  constructor
+  · intro hx
+
+    have hroot : Polynomial.IsRoot P x := by
+      simpa [P] using
+        (mem_frobeniusFixedSubfield_iff_isRoot Ω p f x).mp hx
+
+    rw [Polynomial.mem_rootSet]
+
+    constructor
+    · exact hP_ne
+    · simpa [Polynomial.IsRoot] using hroot
+
+  · intro hx
+
+    have hx' :
+        P ≠ 0 ∧ Polynomial.aeval x P = 0 := by
+      exact Polynomial.mem_rootSet.mp hx
+
+    apply
+      (mem_frobeniusFixedSubfield_iff_isRoot Ω p f x).mpr
+
+    simpa [P, Polynomial.IsRoot] using hx'.2
+
+
 end FiniteSubfieldInAlgebraicClosure
 
 end SerreNumberTheory
