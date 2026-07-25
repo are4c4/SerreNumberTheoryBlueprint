@@ -339,4 +339,58 @@ noncomputable def finiteFieldRingEquivGaloisField
 
 end FiniteFieldUniqueness
 
+/-!
+# 代数閉体内の有限部分体
+-/
+
+section FiniteSubfieldInAlgebraicClosure
+
+variable (Ω : Type*) [Field Ω]
+variable (p f : ℕ) [Fact p.Prime] [CharP Ω p]
+
+/--
+標数`p`の体`Ω`において，
+`x ^ (p ^ f) = x`を満たす元全体がなす部分体．
+-/
+def frobeniusFixedSubfield : Subfield Ω where
+  carrier :=
+    {x : Ω | (iterateFrobenius Ω p f) x = x}
+
+  zero_mem' := by
+    change (iterateFrobenius Ω p f) 0 = 0
+    exact (iterateFrobenius Ω p f).map_zero
+
+  one_mem' := by
+    change (iterateFrobenius Ω p f) 1 = 1
+    exact (iterateFrobenius Ω p f).map_one
+
+  add_mem' := by
+    intro x y hx hy
+    change (iterateFrobenius Ω p f) x = x at hx
+    change (iterateFrobenius Ω p f) y = y at hy
+    change (iterateFrobenius Ω p f) (x + y) = x + y
+    rw [(iterateFrobenius Ω p f).map_add, hx, hy]
+
+  mul_mem' := by
+    intro x y hx hy
+    change (iterateFrobenius Ω p f) x = x at hx
+    change (iterateFrobenius Ω p f) y = y at hy
+    change (iterateFrobenius Ω p f) (x * y) = x * y
+    rw [(iterateFrobenius Ω p f).map_mul, hx, hy]
+
+  neg_mem' := by
+    intro x hx
+    change (iterateFrobenius Ω p f) x = x at hx
+    change (iterateFrobenius Ω p f) (-x) = -x
+    rw [(iterateFrobenius Ω p f).map_neg, hx]
+
+  inv_mem' := by
+    intro x hx
+    change (iterateFrobenius Ω p f) x = x at hx
+    change (iterateFrobenius Ω p f) x⁻¹ = x⁻¹
+    rw [iterateFrobenius_def] at hx ⊢
+    rw [inv_pow, hx]
+
+end FiniteSubfieldInAlgebraicClosure
+
 end SerreNumberTheory
