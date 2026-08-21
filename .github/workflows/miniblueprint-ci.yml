@@ -1,0 +1,21 @@
+name: MiniBlueprint CI
+
+on:
+  push:
+    branches:
+      - integrate-miniblueprint
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: leanprover/lean-action@v1
+      - name: Generate integrated Blueprint HTML
+        run: |
+          lake exe miniblueprint-html
+          test -s blueprint.html
+          grep -q "myFrobeniusFun_add" blueprint.html
+          grep -q "F010101FiniteFields.lean" blueprint.html
