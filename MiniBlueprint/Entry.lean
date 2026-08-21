@@ -53,6 +53,7 @@ structure Entry where
   sourceLineEnd : Option Nat := none
   notionPageUrl : String := ""
   notionPageTitle : String := ""
+  isLinkedFromNotion : Bool := false
   tags : Array String := #[]
   notes : String := ""
 deriving Repr
