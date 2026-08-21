@@ -33,12 +33,12 @@ private def isDeclarationBoundary (line : String) : Bool :=
 
 private def hasDeclarationPrefix
     (line keyword declarationName : String) : Bool :=
-  let prefix := s!"{keyword} {declarationName}"
-  line == prefix ||
-  line.startsWith (prefix ++ " ") ||
-  line.startsWith (prefix ++ " :") ||
-  line.startsWith (prefix ++ " (") ||
-  line.startsWith (prefix ++ " [")
+  let pfx := s!"{keyword} {declarationName}"
+  line == pfx ||
+  line.startsWith (pfx ++ " ") ||
+  line.startsWith (pfx ++ " :") ||
+  line.startsWith (pfx ++ " (") ||
+  line.startsWith (pfx ++ " [")
 
 private def isTargetDeclaration (line declarationName : String) : Bool :=
   let trimmed := line.trim
