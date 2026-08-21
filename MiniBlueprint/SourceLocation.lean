@@ -31,6 +31,23 @@ private def isDeclarationBoundary (line : String) : Bool :=
   line.startsWith "noncomputable def " ||
   line.startsWith "instance "
 
+private def hasDeclarationPrefix
+    (line keyword declarationName : String) : Bool :=
+  let prefix := s!"{keyword} {declarationName}"
+  line == prefix ||
+  line.startsWith (prefix ++ " ") ||
+  line.startsWith (prefix ++ " :") ||
+  line.startsWith (prefix ++ " (") ||
+  line.startsWith (prefix ++ " [")
+
+private def isTargetDeclaration (line declarationName : String) : Bool :=
+  let trimmed := line.trim
+  hasDeclarationPrefix trimmed "theorem" declarationName ||
+  hasDeclarationPrefix trimmed "lemma" declarationName ||
+  hasDeclarationPrefix trimmed "def" declarationName ||
+  hasDeclarationPrefix trimmed "abbrev" declarationName ||
+  hasDeclarationPrefix trimmed "noncomputable def" declarationName
+
 private structure DeclarationSource where
   startLine : Nat
   endLine : Nat
@@ -44,13 +61,7 @@ private def findDeclarationSource
     Id.run do
       let lines := source.splitOn "\n" |>.toArray
       let startIndex? := lines.findIdx? fun line =>
-        let trimmed := line.trim
-        (trimmed.startsWith "theorem " ||
-         trimmed.startsWith "lemma " ||
-         trimmed.startsWith "def " ||
-         trimmed.startsWith "abbrev " ||
-         trimmed.startsWith "noncomputable def ") &&
-        trimmed.contains declarationName
+        isTargetDeclaration line declarationName
       match startIndex? with
       | none => return none
       | some startIndex =>
