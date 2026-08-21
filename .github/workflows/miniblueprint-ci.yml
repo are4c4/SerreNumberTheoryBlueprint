@@ -12,15 +12,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: leanprover/lean-action@v1
-        with:
-          build: false
-          test: false
-          lint: false
-          use-mathlib-cache: false
-      - name: Generate integrated Blueprint HTML
+
+      - name: Install Lean 4.32.0
         run: |
-          lake exe miniblueprint-html
+          curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain leanprover/lean4:v4.32.0
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Compile MiniBlueprint and generate HTML
+        run: |
+          mkdir -p .ci-lean/MiniBlueprint/Registry/Chapter01
+          LEAN_PATH=.ci-lean lean MiniBlueprint/Entry.lean -o .ci-lean/MiniBlueprint/Entry.olean
+          LEAN_PATH=.ci-lean lean MiniBlueprint/SourceLocation.lean -o .ci-lean/MiniBlueprint/SourceLocation.olean
+          LEAN_PATH=.ci-lean lean MiniBlueprint/Registry/Chapter01/Section010101FiniteFields.lean -o .ci-lean/MiniBlueprint/Registry/Chapter01/Section010101FiniteFields.olean
+          LEAN_PATH=.ci-lean lean MiniBlueprint/Registry.lean -o .ci-lean/MiniBlueprint/Registry.olean
+          LEAN_PATH=.ci-lean lean MiniBlueprint/Html.lean -o .ci-lean/MiniBlueprint/Html.olean
+          LEAN_PATH=.ci-lean lean --run HtmlMain.lean
           test -s blueprint.html
           grep -q "myFrobeniusFun_add" blueprint.html
           grep -q "F010101FiniteFields.lean" blueprint.html
