@@ -1,0 +1,74 @@
+<section class="notion-import" data-notion-page="3b9db819351e80808a8bca912f2510a5">
+  <div class="notion-source-bar">
+    <span>Notion</span>
+    <a href="https://app.notion.com/p/3b9db819351e80808a8bca912f2510a5" target="_blank" rel="noopener noreferrer">1.1.1_有限体 ↗</a>
+  </div>
+
+  <p>\(K\) を<a class="notion-mention" href="https://app.notion.com/p/3b9db819351e80818f75c82a83cdb601" target="_blank">体</a>とする。</p>
+  <p><a class="notion-mention" href="https://app.notion.com/p/3b9db819351e803ea61ae4be7cf21a18" target="_blank">環準同型</a> \(f : \mathbb{Z} \to K\) を \(f(1_\mathbb{Z}) = 1_K\) となるように定義する。このとき、\(f\) は次のようになる：</p>
+  <div class="notion-equation">\[f(n)=n\cdot 1_K\]</div>
+
+  <details class="notion-toggle">
+    <summary>\(f(n)=n\cdot1_K\) となることの証明</summary>
+    <div class="notion-toggle-body">
+      <p>\(f\) は環準同型で、\(f(1_\mathbb{Z})=1_K\) だから、</p>
+      <div class="notion-equation">\[
+      \begin{aligned}
+      f(n)
+      &=f(n\cdot1_\mathbb{Z})\\
+      &=f(1_\mathbb{Z}+1_\mathbb{Z}+\cdots+1_\mathbb{Z})\\
+      &=n\cdot f(1_\mathbb{Z})\\
+      &=n\cdot1_K.
+      \end{aligned}
+      \]</div>
+      <p>最後の \(n\cdot1_K\) は、\(K\) 上で \(1_K\) を \(n\) 回足し合わせるという意味である。</p>
+    </div>
+  </details>
+
+  <p>さらに \(f(\mathbb{Z})\) は \(K\) の部分環であり、体 \(K\) の中にあるため零因子を持たない。したがって \(f(\mathbb{Z})\) は<a class="notion-mention" href="https://app.notion.com/p/3b9db819351e801584c8c584148089c3" target="_blank">整域</a>となる。</p>
+
+  <details class="notion-toggle">
+    <summary>\(f(\mathbb{Z})\) が整域となることの証明</summary>
+    <div class="notion-toggle-body">
+      <p>\(f\) は環準同型だから、その像 \(f(\mathbb{Z})\) は \(K\) の部分環になる。\(f(\mathbb{Z})\) の元は体 \(K\) の元なので零因子を持たない。よって \(f(\mathbb{Z})\) は整域である。</p>
+    </div>
+  </details>
+
+  <p>像の構造を調べるために</p>
+  <div class="notion-equation">\[\ker f=\{n\in\mathbb{Z}\mid f(n)=0\}\]</div>
+  <p>を考える。</p>
+
+  <details class="notion-toggle">
+    <summary>\(f(\mathbb{Z})\) は \(\mathbb{Z}\) または \(\mathbb{Z}/p\mathbb{Z}\) と同型</summary>
+    <div class="notion-toggle-body">
+      <details class="notion-toggle nested">
+        <summary>\(\ker f=\{0\}\) のとき</summary>
+        <div class="notion-toggle-body">
+          <p>このとき \(f\) は単射である。また \(f:\mathbb{Z}\to f(\mathbb{Z})\) は全射だから、</p>
+          <div class="notion-equation">\[\mathbb{Z}\cong f(\mathbb{Z}).\]</div>
+        </div>
+      </details>
+
+      <details class="notion-toggle nested">
+        <summary>\(\ker f\neq\{0\}\) のとき</summary>
+        <div class="notion-toggle-body">
+          <p>\(\ker f\) には正の整数が存在するので、</p>
+          <div class="notion-equation">\[p\coloneqq\min\{n\ge1\mid f(n)=0_K\}\]</div>
+          <p>とおく。環の<a class="notion-mention" href="https://app.notion.com/p/3c0db819351e80779aa7fd24e4fff713" target="_blank">準同型定理</a>より、</p>
+          <div class="notion-equation">\[\mathbb{Z}/\ker f\cong f(\mathbb{Z}).\]</div>
+
+          <details class="notion-toggle nested">
+            <summary>\(\ker f=p\mathbb{Z}\) となることの証明</summary>
+            <div class="notion-toggle-body">
+              <p>\(p\mathbb{Z}\subseteq\ker f\) と \(\ker f\subseteq p\mathbb{Z}\) を示す。</p>
+              <p>任意の \(m\in\mathbb{Z}\) に対し、\(f(mp)=f(m)f(p)=0\) なので \(p\mathbb{Z}\subseteq\ker f\)。</p>
+              <p>逆に \(n\in\ker f\) を \(n=qp+r\ (0\le r<p)\) と書くと、\(f(n)=f(r)=0\)。\(p\) の最小性から \(r=0\) なので \(n\in p\mathbb{Z}\)。</p>
+            </div>
+          </details>
+
+          <div class="notion-equation">\[\mathbb{Z}/p\mathbb{Z}\cong f(\mathbb{Z}).\]</div>
+        </div>
+      </details>
+    </div>
+  </details>
+</section>
