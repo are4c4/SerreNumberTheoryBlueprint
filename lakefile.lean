@@ -13,3 +13,10 @@ package SerreNumberTheory where
 
 @[default_target]
 lean_lib SerreNumberTheory where
+
+/-- Natural-language / Lean parallel Blueprint generator. -/
+lean_lib MiniBlueprint where
+
+/-- Generate `blueprint.html` from the real formalization files in this repository. -/
+lean_exe «miniblueprint-html» where
+  root := `HtmlMain

@@ -1,0 +1,44 @@
+name: MiniBlueprint CI
+
+on:
+  push:
+    branches:
+      - integrate-miniblueprint
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Lean 4.32.0
+        run: |
+          curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain leanprover/lean4:v4.32.0
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Check Notion sync script
+        run: python3 -m py_compile scripts/build_blueprint.py
+
+      - name: Compile MiniBlueprint and generate HTML
+        run: |
+          mkdir -p .ci-lean/MiniBlueprint/Registry/Chapter01
+          mkdir -p .ci-lean/MiniBlueprint/Notion
+          LEAN_PATH=.ci-lean lean MiniBlueprint/Entry.lean -o .ci-lean/MiniBlueprint/Entry.olean
+          LEAN_PATH=.ci-lean lean MiniBlueprint/SourceLocation.lean -o .ci-lean/MiniBlueprint/SourceLocation.olean
+          LEAN_PATH=.ci-lean lean MiniBlueprint/Notion/Section010101FiniteFields.lean -o .ci-lean/MiniBlueprint/Notion/Section010101FiniteFields.olean
+          LEAN_PATH=.ci-lean lean MiniBlueprint/Registry/Chapter01/Section010101FiniteFields.lean -o .ci-lean/MiniBlueprint/Registry/Chapter01/Section010101FiniteFields.olean
+          LEAN_PATH=.ci-lean lean MiniBlueprint/Registry.lean -o .ci-lean/MiniBlueprint/Registry.olean
+          LEAN_PATH=.ci-lean lean MiniBlueprint/Html.lean -o .ci-lean/MiniBlueprint/Html.olean
+          LEAN_PATH=.ci-lean lean --run HtmlMain.lean
+          test -s blueprint.html
+          grep -q "class=\"notion-import\"" blueprint.html
+          grep -q "notion-toggle" blueprint.html
+          grep -q "1.1.1_有限体" blueprint.html
+          grep -q "1.1.1_Cor01" blueprint.html
+          grep -q "myFrobeniusEquivPowers" blueprint.html
+          grep -q "notion-linked-entry" blueprint.html
+          grep -q "自然言語の定理文は直前の Notion ブロックを正本" blueprint.html
+          grep -q "myFrobeniusFun_add" blueprint.html
+          grep -q "F010101FiniteFields.lean" blueprint.html
