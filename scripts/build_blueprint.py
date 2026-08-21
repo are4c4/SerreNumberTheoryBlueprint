@@ -5,9 +5,10 @@ Authentication priority:
   1. NOTION_API_KEY / NOTION_TOKEN environment variable
   2. repository-local `.env.local` containing NOTION_API_KEY=...
 
-If no token is present, the checked-in Notion snapshots are kept and the
-Blueprint is still built. This makes CI/local builds deterministic while
-allowing an authenticated local build to refresh Notion automatically.
+The script scans the whole Number Theory data source, selects pages in the
+current section whose `Lean declarations` property is non-empty, and emits
+Notion/Lean pairs automatically. If no token is present, checked-in snapshots
+are kept so ordinary CI builds remain deterministic.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from __future__ import annotations
 import html
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.error
@@ -23,8 +25,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 NOTION_VERSION = "2026-03-11"
-SECTION_PAGE_ID = "3b9db819351e80808a8bca912f2510a5"  # 1.1.1_有限体
-COR01_PAGE_ID = "3b9db819351e80a2a54cf8f5b7d10a59"   # 1.1.1_Cor01
+DATA_SOURCE_ID = "3b9db819-351e-809f-9063-000b6cecd6de"  # 数論講義DB
+SECTION_PAGE_ID = "3b9db819351e80808a8bca912f2510a5"     # 1.1.1_有限体
+SECTION_PREFIX = "1.1.1"
 NOTION_LEAN_PATH = ROOT / "MiniBlueprint/Notion/Section010101FiniteFields.lean"
 NOTION_HTML_PATH = ROOT / "MiniBlueprint/Notion/Section010101FiniteFields.html"
 
@@ -216,7 +219,8 @@ def render_block(block: dict, depth: int = 0) -> str:
     if kind == "divider":
         return "<hr>"
     if kind in {"bulleted_list_item", "numbered_list_item"}:
-        return f'<div class="notion-list-item">• {content}{children}</div>'
+        bullet = "•" if kind == "bulleted_list_item" else "1."
+        return f'<div class="notion-list-item">{bullet} {content}{children}</div>'
     if kind == "quote":
         return f"<blockquote>{content}{children}</blockquote>"
     if kind == "code":
@@ -228,7 +232,6 @@ def render_block(block: dict, depth: int = 0) -> str:
     if kind in {"child_page", "child_database"}:
         title = data.get("title", kind) or kind
         return f"<p>{html.escape(title)}</p>"
-    # Unsupported visual blocks are omitted, but their children are retained.
     return children
 
 
@@ -242,8 +245,15 @@ def property_text(page: dict, name: str) -> str:
     return ""
 
 
+def property_multi_select(page: dict, name: str) -> list[str]:
+    prop = (page.get("properties") or {}).get(name) or {}
+    if prop.get("type") != "multi_select":
+        return []
+    return [str(item.get("name", "")) for item in (prop.get("multi_select") or []) if item]
+
+
 def first_statement(page_id: str) -> str:
-    """Return the first substantial paragraph-like statement from the page."""
+    """Return the first substantial paragraph-like statement from a page."""
     def walk(blocks: list[dict]) -> str:
         for block in blocks:
             block = block or {}
@@ -261,25 +271,143 @@ def first_statement(page_id: str) -> str:
     return walk(block_children(page_id))
 
 
+def query_data_source_pages() -> list[dict]:
+    """Query every row in the Number Theory data source with pagination."""
+    pages: list[dict] = []
+    cursor: str | None = None
+    while True:
+        body: dict[str, object] = {"page_size": 100}
+        if cursor:
+            body["start_cursor"] = cursor
+        payload = request_json(
+            f"data_sources/{DATA_SOURCE_ID}/query",
+            method="POST",
+            body=body,
+        )
+        pages.extend(page for page in (payload.get("results") or []) if (page or {}).get("object") == "page")
+        if not payload.get("has_more"):
+            return pages
+        cursor = payload.get("next_cursor")
+
+
+def section_linked_pages() -> list[dict]:
+    """Scan the whole DB, then keep linked pages belonging to this section."""
+    linked: list[dict] = []
+    for page in query_data_source_pages():
+        title = page_title(page)
+        declaration_text = property_text(page, "Lean declarations").strip()
+        if not declaration_text:
+            continue
+        if not (title == SECTION_PREFIX or title.startswith(SECTION_PREFIX + "_")):
+            continue
+        linked.append(page)
+    linked.sort(key=lambda page: page_title(page))
+    return linked
+
+
 def lean_string(value: str) -> str:
     return json.dumps(value, ensure_ascii=False)
 
 
-def generate_lean_snapshot(cor_page: dict) -> str:
-    title = page_title(cor_page) or "1.1.1_Cor01"
-    declaration_text = property_text(cor_page, "Lean declarations")
+def lean_array(values: list[str]) -> str:
+    return "#[" + ", ".join(lean_string(value) for value in values) + "]"
+
+
+def marker_for_page(page_id: str) -> str:
+    compact = re.sub(r"[^A-Za-z0-9]", "", page_id)
+    return f"__NOTION_LINKED_{compact}__"
+
+
+def linked_page_record(page: dict) -> dict[str, object]:
+    page_id = str(page.get("id", ""))
+    title = page_title(page) or page_id
+    declaration_text = property_text(page, "Lean declarations")
     declarations = [line.strip() for line in declaration_text.splitlines() if line.strip()]
-    primary = declarations[0] if declarations else ""
-    statement = first_statement(COR01_PAGE_ID)
-    url = cor_page.get("public_url") or cor_page.get("url") or page_url_from_id(COR01_PAGE_ID)
-    return f'''import MiniBlueprint.Entry\n\nset_option autoImplicit false\n\nnamespace MiniBlueprint.Notion.Section010101\n\n/-- Auto-generated from Notion by `scripts/build_blueprint.py`. -/\ndef pageUrl : String :=\n  {lean_string(page_url_from_id(SECTION_PAGE_ID))}\n\n/-- Notion theorem page linked to a Lean declaration. -/\ndef cor01PageUrl : String :=\n  {lean_string(url)}\n\ndef cor01Title : String :=\n  {lean_string(title)}\n\ndef cor01Statement : String :=\n  {lean_string(statement)}\n\ndef cor01LeanDeclarations : Array String :=\n  #[''' + ", ".join(lean_string(x) for x in declarations) + ''']\n\ndef cor01PrimaryLeanDeclaration : String :=\n  ''' + lean_string(primary) + '''\n\nend MiniBlueprint.Notion.Section010101\n'''
+    types = property_multi_select(page, "タイプ")
+    kind = "Definition" if "Definition" in types else "Theorem"
+    statement = first_statement(page_id)
+    url = page.get("public_url") or page.get("url") or page_url_from_id(page_id)
+    body = render_children(page_id)
+    page_html = f'''<section class="notion-linked-entry" id="notion-{html.escape(page_id.replace('-', ''))}">
+  <div class="notion-linked-header">
+    <span>{html.escape(kind)}</span>
+    <a href="{html.escape(str(url))}" target="_blank" rel="noopener noreferrer">{html.escape(title)} ↗</a>
+  </div>
+{body}
+</section>'''
+    return {
+        "id": page_id,
+        "title": title,
+        "url": str(url),
+        "statement": statement,
+        "kind": kind,
+        "declarations": declarations,
+        "marker": marker_for_page(page_id),
+        "html": page_html,
+    }
+
+
+def generate_lean_snapshot(linked_pages: list[dict]) -> str:
+    records = [linked_page_record(page) for page in linked_pages]
+    items: list[str] = []
+    for record in records:
+        declarations = list(record["declarations"])
+        primary = declarations[0] if declarations else ""
+        items.append(
+            "  { pageId := " + lean_string(str(record["id"]))
+            + ", title := " + lean_string(str(record["title"]))
+            + ", pageUrl := " + lean_string(str(record["url"]))
+            + ", statement := " + lean_string(str(record["statement"]))
+            + ", kind := " + lean_string(str(record["kind"]))
+            + ", leanDeclarations := " + lean_array(declarations)
+            + ", primaryLeanDeclaration := " + lean_string(primary)
+            + ", htmlMarker := " + lean_string(str(record["marker"]))
+            + ", html := " + lean_string(str(record["html"]))
+            + " }"
+        )
+    items_text = "#[\n" + ",\n".join(items) + "\n]" if items else "#[]"
+    return f'''import MiniBlueprint.Entry
+
+set_option autoImplicit false
+
+namespace MiniBlueprint.Notion.Section010101
+
+structure LinkedPage where
+  pageId : String
+  title : String
+  pageUrl : String
+  statement : String
+  kind : String
+  leanDeclarations : Array String
+  primaryLeanDeclaration : String
+  htmlMarker : String
+  html : String
+deriving Repr
+
+/-- Auto-generated from the Notion Number Theory database. -/
+def pageUrl : String :=
+  {lean_string(page_url_from_id(SECTION_PAGE_ID))}
+
+/-- Pages in section 1.1.1 whose `Lean declarations` property is non-empty. -/
+def linkedPages : Array LinkedPage :=
+  {items_text}
+
+end MiniBlueprint.Notion.Section010101
+'''
 
 
 def generate_section_html(section_page: dict) -> str:
     title = page_title(section_page) or "1.1.1_有限体"
     url = section_page.get("public_url") or section_page.get("url") or page_url_from_id(SECTION_PAGE_ID)
     body = render_children(SECTION_PAGE_ID)
-    return f'''<section class="notion-import" data-notion-page="{SECTION_PAGE_ID}">\n  <div class="notion-source-bar">\n    <span>Notion · auto synced</span>\n    <a href="{html.escape(url)}" target="_blank" rel="noopener noreferrer">{html.escape(title)} ↗</a>\n  </div>\n{body}\n</section>\n'''
+    return f'''<section class="notion-import" data-notion-page="{SECTION_PAGE_ID}">
+  <div class="notion-source-bar">
+    <span>Notion · auto synced</span>
+    <a href="{html.escape(str(url))}" target="_blank" rel="noopener noreferrer">{html.escape(title)} ↗</a>
+  </div>
+{body}
+</section>
+'''
 
 
 def sync_notion() -> bool:
@@ -288,14 +416,16 @@ def sync_notion() -> bool:
         return False
     print("[Notion] Fetching latest pages...")
     section_page = retrieve_page(SECTION_PAGE_ID)
-    cor_page = retrieve_page(COR01_PAGE_ID)
-    NOTION_LEAN_PATH.write_text(generate_lean_snapshot(cor_page), encoding="utf-8")
+    linked_pages = section_linked_pages()
+    NOTION_LEAN_PATH.write_text(generate_lean_snapshot(linked_pages), encoding="utf-8")
     NOTION_HTML_PATH.write_text(generate_section_html(section_page), encoding="utf-8")
     print(f"[Notion] Synced {page_title(section_page)}")
-    print(
-        "[Notion] Lean declarations: "
-        + (property_text(cor_page, "Lean declarations") or "(none)")
-    )
+    print(f"[Notion] Linked pages detected: {len(linked_pages)}")
+    for page in linked_pages:
+        print(
+            f"  - {page_title(page)} -> "
+            + property_text(page, "Lean declarations").replace("\n", ", ")
+        )
     return True
 
 
