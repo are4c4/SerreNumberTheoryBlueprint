@@ -103,6 +103,21 @@ private def renderSourceLocation (entry : Entry) : String :=
     else
       s!"<div class=\"source-location\"><span>Source</span><a href=\"{htmlEscape url}\" target=\"_blank\" rel=\"noopener noreferrer\">{htmlEscape display} ↗</a></div>"
 
+private def renderNotionLink (entry : Entry) : String :=
+  if entry.notionPageUrl.isEmpty then "—"
+  else
+    let title := if entry.notionPageTitle.isEmpty then "Notion page" else entry.notionPageTitle
+    s!"<a class=\"notion-card-link\" href=\"{htmlEscape entry.notionPageUrl}\" target=\"_blank\" rel=\"noopener noreferrer\">{htmlEscape title} ↗</a>"
+
+private def renderCompactSource (entry : Entry) : String :=
+  if entry.sourcePath.isEmpty then "—"
+  else
+    let lineLabel := sourceLineLabel entry
+    let display := if lineLabel.isEmpty then entry.sourcePath else s!"{entry.sourcePath} : {lineLabel}"
+    let url := sourceUrl entry
+    if url.isEmpty then s!"<code>{htmlEscape display}</code>"
+    else s!"<a class=\"notion-card-link\" href=\"{htmlEscape url}\" target=\"_blank\" rel=\"noopener noreferrer\">{htmlEscape display} ↗</a>"
+
 private def renderExplanationData (entry : Entry) : String :=
   String.intercalate "\n" [
     s!"<div id=\"explanation-{htmlEscape entry.id}\" class=\"explanation-data\" hidden>",
@@ -122,15 +137,8 @@ private def renderLeanCode (entry : Entry) : String :=
     let startLine := match entry.sourceLineStart with | some n => n | none => 1
     s!"<pre class=\"lean-pre\"><code class=\"lean-source\" data-entry-id=\"{htmlEscape entry.id}\" data-start-line=\"{startLine}\">{htmlEscape entry.leanCode}</code></pre>"
 
-private def renderEntry (entry : Entry) : String :=
-  let declarationName := declarationLabel entry
+private def renderNormalNaturalLanguage (entry : Entry) : String :=
   String.intercalate "\n" [
-    s!"<article class=\"entry\" id=\"{htmlEscape entry.id}\">",
-    "<header class=\"entry-header\"><div>",
-    s!"<div class=\"eyebrow\">{htmlEscape entry.sectionId} · {htmlEscape entry.id}</div>",
-    s!"<h2>{htmlEscape entry.title}</h2></div>",
-    s!"<span class=\"status {progressClass entry.progress}\">{progressLabel entry.progress}</span></header>",
-    "<div class=\"split\">",
     "<section class=\"natural-language\">",
     s!"<div class=\"book-label main-label\">{kindLabel entry.kind}</div>",
     s!"<div class=\"math-text statement\">{htmlEscape entry.description}</div>",
@@ -139,12 +147,36 @@ private def renderEntry (entry : Entry) : String :=
     "<dl>",
     s!"<dt>Lean declaration</dt><dd>{renderDeclaration entry}</dd>",
     s!"<dt>Dependencies</dt><dd class=\"dependencies\">{renderDependencies entry}</dd>",
-    "</dl></section>",
+    "</dl></section>"
+  ]
+
+private def renderNotionLinkedNaturalLanguage (entry : Entry) : String :=
+  String.intercalate "\n" [
+    "<section class=\"natural-language notion-linked-meta\">",
+    "<div class=\"book-label main-label\">Notion ↔ Lean</div>",
+    "<div class=\"correspondence-note\">自然言語の定理文は直前の Notion ブロックを正本として表示しています。</div>",
+    "<dl>",
+    s!"<dt>Lean declaration</dt><dd>{renderDeclaration entry}</dd>",
+    s!"<dt>Notion</dt><dd>{renderNotionLink entry}</dd>",
+    s!"<dt>Source</dt><dd>{renderCompactSource entry}</dd>",
+    "</dl></section>"
+  ]
+
+private def renderEntry (entry : Entry) : String :=
+  let declarationName := declarationLabel entry
+  String.intercalate "\n" [
+    s!"<article class=\"entry{if entry.isLinkedFromNotion then " notion-linked-entry" else ""}\" id=\"{htmlEscape entry.id}\">",
+    "<header class=\"entry-header\"><div>",
+    s!"<div class=\"eyebrow\">{htmlEscape entry.sectionId} · {htmlEscape entry.id}</div>",
+    s!"<h2>{htmlEscape entry.title}</h2></div>",
+    s!"<span class=\"status {progressClass entry.progress}\">{progressLabel entry.progress}</span></header>",
+    "<div class=\"split\">",
+    if entry.isLinkedFromNotion then renderNotionLinkedNaturalLanguage entry else renderNormalNaturalLanguage entry,
     "<section class=\"lean-code\"><div class=\"lean-heading\"><h3>Lean</h3>",
     if declarationName.isEmpty then "" else s!"<span class=\"lean-name\">{htmlEscape declarationName}</span>",
     "</div>",
     renderLeanCode entry,
-    renderSourceLocation entry,
+    if entry.isLinkedFromNotion then "" else renderSourceLocation entry,
     if entry.leanReferences.isEmpty then "" else "<div class=\"lean-hint\">青い下線の宣言名をクリックすると型・説明・出典を表示します。</div>",
     "</section></div>",
     renderProofSteps entry,
@@ -188,6 +220,7 @@ def renderHtml (document : Array DocumentBlock) : String :=
     "main{max-width:1500px;width:100%;margin:0 auto;padding:34px 28px 80px}.doc-heading{scroll-margin-top:18px}.doc-heading-2{font-size:1.8rem;margin:8px 0 16px}.doc-heading-3{font-size:1.3rem;margin:42px 0 12px;padding-bottom:8px;border-bottom:1px solid #dbe2ea}.prose{max-width:900px;font-size:1.02rem;line-height:2;margin:0 0 24px;color:#334155}",
     ".entry{background:#fff;border:1px solid #dfe3e8;border-radius:14px;margin:28px 0;overflow:hidden;box-shadow:0 2px 8px rgba(15,23,42,.04);scroll-margin-top:16px}.entry:target{box-shadow:0 0 0 3px rgba(148,163,184,.22)}.entry-header{display:flex;justify-content:space-between;gap:16px;padding:20px 26px;border-bottom:1px solid #e5e7eb}.entry-header h2{margin:4px 0 0;font-size:1.25rem}.eyebrow{font-size:.8rem;color:#667085}.status{height:max-content;border-radius:999px;padding:5px 10px;font-size:.78rem;font-weight:700}.formalized{background:#dcfce7;color:#166534}.in-progress{background:#fef3c7;color:#92400e}.planned{background:#e5e7eb;color:#475569}",
     ".split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)}.split section{min-width:0;padding:26px}.natural-language{border-right:1px solid #e5e7eb}.book-label{font:700 .75rem ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.08em;color:#475569}.main-label{margin-bottom:14px}.math-text{line-height:1.9;white-space:pre-wrap}.book-block{margin-top:24px;padding:16px 18px;border-left:4px solid #cbd5e1;background:#f8fafc;border-radius:0 8px 8px 0}.remark-block{border-left-color:#a5b4fc;background:#f8f9ff}",
+    ".notion-linked-entry{margin-top:14px}.notion-linked-meta{background:#fbfcfd}.correspondence-note{margin:0 0 18px;color:#64748b;font-size:.82rem;line-height:1.7}.notion-card-link{color:#2563eb;text-decoration:none}.notion-card-link:hover{text-decoration:underline}",
     "dl{display:grid;grid-template-columns:130px 1fr;gap:10px 12px;margin:24px 0 0;font-size:.85rem}dt{color:#667085}dd{margin:0;overflow-wrap:anywhere}.dependencies{display:flex;flex-wrap:wrap;gap:6px}.dependency-chip{padding:3px 8px;border-radius:999px;background:#eef2ff;color:#4338ca;text-decoration:none;font:12px ui-monospace,SFMono-Regular,Menlo,monospace}.declaration-button,.lean-ref{border:0;padding:0;background:transparent;color:#2563eb;cursor:pointer;font:inherit;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}",
     ".lean-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.lean-heading h3{margin:0 0 14px;font-size:.9rem;color:#475569;text-transform:uppercase}.lean-name{color:#64748b;font:11px ui-monospace,SFMono-Regular,Menlo,monospace}.lean-pre{margin:0;overflow:auto;border-radius:10px;background:#0d1117}.lean-source{display:block;padding:14px 0;font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:#c9d1d9}.code-row{display:grid;grid-template-columns:54px minmax(max-content,1fr)}.line-no{padding:0 12px 0 8px;text-align:right;color:#6e7681;user-select:none;border-right:1px solid #30363d}.line-body{padding:0 16px;white-space:pre}.proof-code{font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}.no-code{padding:16px;border-radius:8px;background:#f8fafc;color:#64748b;font-size:.85rem}",
     ".source-location{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;margin-top:12px;padding:9px 11px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-size:.72rem}.source-location span{color:#64748b;font-weight:700;text-transform:uppercase}.source-location a,.source-location code{font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}.source-location a{color:#2563eb;text-decoration:none}.lean-hint{margin-top:9px;font-size:.72rem;color:#94a3b8}",
