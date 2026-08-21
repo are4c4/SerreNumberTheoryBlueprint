@@ -17,6 +17,7 @@ jobs:
           build: false
           test: false
           lint: false
+          use-mathlib-cache: false
       - name: Generate integrated Blueprint HTML
         run: |
           lake exe miniblueprint-html
