@@ -12,6 +12,29 @@ Notion の「1.1.1_有限体」から取り込んだ試作用スナップショ�
 def pageUrl : String :=
   "https://app.notion.com/p/3b9db819351e80808a8bca912f2510a5"
 
+/-- Notion の `1.1.1_Cor01` ページ URL。 -/
+def cor01PageUrl : String :=
+  "https://app.notion.com/p/3b9db819351e80a2a54cf8f5b7d10a59"
+
+/-- Notion 側の定理タイトル。 -/
+def cor01Title : String := "1.1.1_Cor01"
+
+/-- Notion 側の定理本文。 -/
+def cor01Statement : String :=
+  "\\(K\\) の標数が \\(p>0\\) ならば、Frobenius 写像 \\(\\sigma:x\\mapsto x^p\\) によって \\(K\\) はその部分体 \\(K^p\\) と同型になる。"
+
+/--
+Notion DB の `Lean declarations` プロパティから取得した宣言名。
+今後の自動同期では、この値を Notion API から更新する。
+-/
+def cor01LeanDeclarations : Array String := #[
+  "SerreNumberTheory.myFrobeniusEquivPowers"
+]
+
+/-- `Lean declarations` の先頭を主宣言として扱う。 -/
+def cor01PrimaryLeanDeclaration : String :=
+  cor01LeanDeclarations[0]!
+
 /-- Notion ノート冒頭を Blueprint の本文ブロックへ変換した試作。 -/
 def document : Array DocumentBlock := #[
   .heading 3 "notion-note-1-1-1" "Notionノート（試作）",
