@@ -51,6 +51,8 @@ structure Entry where
   sourcePath : String := ""
   sourceLineStart : Option Nat := none
   sourceLineEnd : Option Nat := none
+  notionPageUrl : String := ""
+  notionPageTitle : String := ""
   tags : Array String := #[]
   notes : String := ""
 deriving Repr
