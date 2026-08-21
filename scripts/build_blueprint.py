@@ -72,9 +72,9 @@ def request_json(path: str, method: str = "GET", body: dict | None = None) -> di
 
 
 def page_title(page: dict) -> str:
-    for prop in page.get("properties", {}).values():
-        if prop.get("type") == "title":
-            return rich_text_plain(prop.get("title", []))
+    for prop in (page.get("properties") or {}).values():
+        if (prop or {}).get("type") == "title":
+            return rich_text_plain((prop or {}).get("title") or [])
     return ""
 
 
@@ -100,17 +100,19 @@ def page_url_from_id(page_id: str) -> str:
 
 def rich_text_plain(items: list[dict]) -> str:
     parts: list[str] = []
-    for item in items:
+    for item in items or []:
+        item = item or {}
         kind = item.get("type")
         if kind == "text":
-            parts.append(item.get("plain_text") or item.get("text", {}).get("content", ""))
+            text_data = item.get("text") or {}
+            parts.append(item.get("plain_text") or text_data.get("content", ""))
         elif kind == "equation":
-            expr = item.get("equation", {}).get("expression", "")
+            expr = (item.get("equation") or {}).get("expression", "")
             parts.append(f"\\({expr}\\)")
         elif kind == "mention":
-            mention = item.get("mention", {})
+            mention = item.get("mention") or {}
             if mention.get("type") == "page":
-                pid = mention.get("page", {}).get("id", "")
+                pid = (mention.get("page") or {}).get("id", "")
                 parts.append(resolve_page_title(pid) if pid else "Notion page")
             else:
                 parts.append(item.get("plain_text", ""))
@@ -121,26 +123,29 @@ def rich_text_plain(items: list[dict]) -> str:
 
 def rich_text_html(items: list[dict]) -> str:
     parts: list[str] = []
-    for item in items:
+    for item in items or []:
+        item = item or {}
         kind = item.get("type")
+        mention = item.get("mention") or {}
         if kind == "equation":
-            expr = item.get("equation", {}).get("expression", "")
+            expr = (item.get("equation") or {}).get("expression", "")
             piece = f"\\({html.escape(expr)}\\)"
-        elif kind == "mention" and item.get("mention", {}).get("type") == "page":
-            pid = item.get("mention", {}).get("page", {}).get("id", "")
+        elif kind == "mention" and mention.get("type") == "page":
+            pid = (mention.get("page") or {}).get("id", "")
             label = resolve_page_title(pid) if pid else (item.get("plain_text") or "Notion page")
             piece = (
                 f'<a class="notion-mention" href="{html.escape(page_url_from_id(pid))}" '
                 f'target="_blank" rel="noopener noreferrer">{html.escape(label)}</a>'
             )
         else:
-            text = item.get("plain_text") or item.get("text", {}).get("content", "")
+            text_data = item.get("text") or {}
+            text = item.get("plain_text") or text_data.get("content", "")
             piece = html.escape(text)
             href = item.get("href")
             if href:
                 piece = f'<a class="notion-mention" href="{html.escape(href)}" target="_blank" rel="noopener noreferrer">{piece}</a>'
 
-        ann = item.get("annotations", {})
+        ann = item.get("annotations") or {}
         if ann.get("code"):
             piece = f"<code>{piece}</code>"
         if ann.get("bold"):
@@ -164,7 +169,7 @@ def block_children(block_id: str) -> list[dict]:
             from urllib.parse import quote
             suffix += f"&start_cursor={quote(cursor)}"
         payload = request_json(f"blocks/{block_id}/children{suffix}")
-        results.extend(payload.get("results", []))
+        results.extend(payload.get("results") or [])
         if not payload.get("has_more"):
             return results
         cursor = payload.get("next_cursor")
@@ -175,16 +180,17 @@ def render_children(block_id: str, depth: int = 0) -> str:
 
 
 def render_block(block: dict, depth: int = 0) -> str:
+    block = block or {}
     kind = block.get("type", "")
-    data = block.get(kind, {}) if kind else {}
+    data = (block.get(kind) or {}) if kind else {}
     bid = block.get("id", "")
-    content = rich_text_html(data.get("rich_text", []))
+    content = rich_text_html(data.get("rich_text") or [])
     children = render_children(bid, depth + 1) if block.get("has_children") else ""
 
     if kind == "paragraph":
         return (f"<p>{content}</p>" if content else "") + children
     if kind == "equation":
-        expr = data.get("expression", "")
+        expr = data.get("expression", "") or ""
         return f'<div class="notion-equation">\\[{html.escape(expr)}\\]</div>' + children
     if kind in {"heading_1", "heading_2", "heading_3"}:
         level = {"heading_1": 2, "heading_2": 3, "heading_3": 4}[kind]
@@ -202,7 +208,7 @@ def render_block(block: dict, depth: int = 0) -> str:
             f'<div class="notion-toggle-body">{children}</div></details>'
         )
     if kind == "callout":
-        icon = data.get("icon", {})
+        icon = data.get("icon") or {}
         emoji = icon.get("emoji", "") if icon.get("type") == "emoji" else ""
         return f'<div class="notion-callout">{html.escape(emoji)} {content}{children}</div>'
     if kind == "synced_block":
@@ -214,25 +220,25 @@ def render_block(block: dict, depth: int = 0) -> str:
     if kind == "quote":
         return f"<blockquote>{content}{children}</blockquote>"
     if kind == "code":
-        language = html.escape(data.get("language", ""))
-        return f'<pre><code data-language="{language}">{html.escape(rich_text_plain(data.get("rich_text", [])))}</code></pre>'
+        language = html.escape(data.get("language", "") or "")
+        return f'<pre><code data-language="{language}">{html.escape(rich_text_plain(data.get("rich_text") or []))}</code></pre>'
     if kind in {"bookmark", "link_preview"}:
-        url = data.get("url", "")
-        return f'<p><a class="notion-mention" href="{html.escape(url)}" target="_blank">{html.escape(url)}</a></p>'
+        url = data.get("url", "") or ""
+        return f'<p><a class="notion-mention" href="{html.escape(url)}" target="_blank" rel="noopener noreferrer">{html.escape(url)}</a></p>'
     if kind in {"child_page", "child_database"}:
-        title = data.get("title", kind)
+        title = data.get("title", kind) or kind
         return f"<p>{html.escape(title)}</p>"
     # Unsupported visual blocks are omitted, but their children are retained.
     return children
 
 
 def property_text(page: dict, name: str) -> str:
-    prop = page.get("properties", {}).get(name, {})
+    prop = (page.get("properties") or {}).get(name) or {}
     typ = prop.get("type")
     if typ == "rich_text":
-        return rich_text_plain(prop.get("rich_text", []))
+        return rich_text_plain(prop.get("rich_text") or [])
     if typ == "title":
-        return rich_text_plain(prop.get("title", []))
+        return rich_text_plain(prop.get("title") or [])
     return ""
 
 
@@ -240,10 +246,11 @@ def first_statement(page_id: str) -> str:
     """Return the first substantial paragraph-like statement from the page."""
     def walk(blocks: list[dict]) -> str:
         for block in blocks:
+            block = block or {}
             kind = block.get("type", "")
-            data = block.get(kind, {}) if kind else {}
+            data = (block.get(kind) or {}) if kind else {}
             if kind == "paragraph":
-                text = rich_text_plain(data.get("rich_text", [])).strip()
+                text = rich_text_plain(data.get("rich_text") or []).strip()
                 if text:
                     return text
             if block.get("has_children"):
