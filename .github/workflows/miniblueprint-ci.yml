@@ -38,5 +38,7 @@ jobs:
           grep -q "1.1.1_有限体" blueprint.html
           grep -q "1.1.1_Cor01" blueprint.html
           grep -q "myFrobeniusEquivPowers" blueprint.html
+          grep -q "notion-linked-entry" blueprint.html
+          grep -q "自然言語の定理文は直前の Notion ブロックを正本" blueprint.html
           grep -q "myFrobeniusFun_add" blueprint.html
           grep -q "F010101FiniteFields.lean" blueprint.html
