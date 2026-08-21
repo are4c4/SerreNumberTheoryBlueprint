@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Sync Notion notes, then build MiniBlueprint HTML.
 
-Environment:
-  NOTION_API_KEY (or NOTION_TOKEN): Notion integration secret.
+Authentication priority:
+  1. NOTION_API_KEY / NOTION_TOKEN environment variable
+  2. repository-local `.env.local` containing NOTION_API_KEY=...
 
 If no token is present, the checked-in Notion snapshots are kept and the
 Blueprint is still built. This makes CI/local builds deterministic while
@@ -27,6 +28,23 @@ COR01_PAGE_ID = "3b9db819351e80a2a54cf8f5b7d10a59"   # 1.1.1_Cor01
 NOTION_LEAN_PATH = ROOT / "MiniBlueprint/Notion/Section010101FiniteFields.lean"
 NOTION_HTML_PATH = ROOT / "MiniBlueprint/Notion/Section010101FiniteFields.html"
 
+
+def load_local_env() -> None:
+    path = ROOT / ".env.local"
+    if not path.exists():
+        return
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+load_local_env()
 TOKEN = os.environ.get("NOTION_API_KEY") or os.environ.get("NOTION_TOKEN")
 _page_title_cache: dict[str, str] = {}
 
@@ -192,7 +210,7 @@ def render_block(block: dict, depth: int = 0) -> str:
     if kind == "divider":
         return "<hr>"
     if kind in {"bulleted_list_item", "numbered_list_item"}:
-        return f"<div class=\"notion-list-item\">• {content}{children}</div>"
+        return f'<div class="notion-list-item">• {content}{children}</div>'
     if kind == "quote":
         return f"<blockquote>{content}{children}</blockquote>"
     if kind == "code":
@@ -216,13 +234,6 @@ def property_text(page: dict, name: str) -> str:
     if typ == "title":
         return rich_text_plain(prop.get("title", []))
     return ""
-
-
-def property_multi_select(page: dict, name: str) -> list[str]:
-    prop = page.get("properties", {}).get(name, {})
-    if prop.get("type") != "multi_select":
-        return []
-    return [x.get("name", "") for x in prop.get("multi_select", [])]
 
 
 def first_statement(page_id: str) -> str:
