@@ -21,15 +21,15 @@ jobs:
       - name: Compile MiniBlueprint and generate HTML
         run: |
           mkdir -p .ci-lean/MiniBlueprint/Registry/Chapter01
-          mkdir -p .ci-lean/MiniBlueprint/Notion
           LEAN_PATH=.ci-lean lean MiniBlueprint/Entry.lean -o .ci-lean/MiniBlueprint/Entry.olean
           LEAN_PATH=.ci-lean lean MiniBlueprint/SourceLocation.lean -o .ci-lean/MiniBlueprint/SourceLocation.olean
-          LEAN_PATH=.ci-lean lean MiniBlueprint/Notion/Section010101FiniteFields.lean -o .ci-lean/MiniBlueprint/Notion/Section010101FiniteFields.olean
           LEAN_PATH=.ci-lean lean MiniBlueprint/Registry/Chapter01/Section010101FiniteFields.lean -o .ci-lean/MiniBlueprint/Registry/Chapter01/Section010101FiniteFields.olean
           LEAN_PATH=.ci-lean lean MiniBlueprint/Registry.lean -o .ci-lean/MiniBlueprint/Registry.olean
           LEAN_PATH=.ci-lean lean MiniBlueprint/Html.lean -o .ci-lean/MiniBlueprint/Html.olean
           LEAN_PATH=.ci-lean lean --run HtmlMain.lean
           test -s blueprint.html
-          grep -q "Notionノート（試作）" blueprint.html
+          grep -q "class=\"notion-import\"" blueprint.html
+          grep -q "notion-toggle" blueprint.html
+          grep -q "1.1.1_有限体" blueprint.html
           grep -q "myFrobeniusFun_add" blueprint.html
           grep -q "F010101FiniteFields.lean" blueprint.html
