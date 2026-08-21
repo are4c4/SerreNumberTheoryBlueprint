@@ -26,6 +26,7 @@ private def notionLinkedEntry
   sourcePath := "SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean"
   notionPageUrl := page.pageUrl
   notionPageTitle := page.title
+  isLinkedFromNotion := true
   tags := #["finite-field", "notion-linked"]
 
 private def notionLinkedBlocks : Array DocumentBlock :=
