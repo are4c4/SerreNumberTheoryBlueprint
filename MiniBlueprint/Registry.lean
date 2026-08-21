@@ -1,4 +1,5 @@
 import MiniBlueprint.Entry
+import MiniBlueprint.Notion.Section010101FiniteFields
 import MiniBlueprint.Registry.Chapter01.Section010101FiniteFields
 
 set_option autoImplicit false
@@ -10,7 +11,7 @@ namespace FiniteFields
 open Registry.Chapter01.Section010101
 
 /-- 1.1.1 を通常本文と必要な Definition/Theorem ブロックで構成します。 -/
-def document : Array DocumentBlock := #[
+def coreDocument : Array DocumentBlock := #[
   .heading 2 "section-1-1-1" "1.1.1 有限体",
   .paragraph "この節では、有限体を調べるための準備として体の標数と Frobenius 写像を扱う。まず体の標数について確認し、その後、正標数の体に特有の写像 \\(x\\mapsto x^p\\) の基本的な性質を調べる。",
 
@@ -33,6 +34,13 @@ def document : Array DocumentBlock := #[
   .paragraph "さらに体から体へのこの環準同型は単射になる。",
   .entry frobeniusInjective
 ]
+
+/--
+Notion ノートのスナップショットを先頭に差し込み、その後に Lean 対応済みの本文を続けます。
+試作段階では Notion 側の文章と既存 Blueprint 本文を並存させます。
+-/
+def document : Array DocumentBlock :=
+  Notion.Section010101.document ++ coreDocument
 
 end FiniteFields
 
