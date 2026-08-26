@@ -15,5 +15,6 @@ permissions:
 
 jobs:
   pages:
+    # Reusable workflow builds and deploys the Blueprint site.
     uses: ./.github/workflows/blueprint-pages.yml
     secrets: inherit
