@@ -23,11 +23,54 @@ private def notionStyle : String := String.intercalate "\n" [
   "</style>"
 ]
 
+private def notionEmbedSupport : String := String.intercalate "\n" [
+  "<style>",
+  "body.single-entry-mode .sidebar{display:none}",
+  "body.single-entry-mode .app{display:block;min-height:0}",
+  "body.single-entry-mode main{max-width:none;padding:16px}",
+  "body.single-entry-mode .entry{margin:0}",
+  "body.notion-embed-mode{background:transparent}",
+  "body.notion-embed-mode main{padding:0}",
+  "body.notion-embed-mode .entry{border-radius:10px;box-shadow:none}",
+  "body.notion-embed-mode .entry-header{padding:12px 16px}",
+  "body.notion-embed-mode .entry-header h2{font-size:1.05rem}",
+  "body.notion-embed-mode .split section{padding:14px 16px}",
+  "body.notion-embed-mode .lean-source{font-size:12px;line-height:1.3;padding:10px 0}",
+  "body.notion-embed-mode .code-row{grid-template-columns:44px minmax(max-content,1fr)}",
+  "body.notion-embed-mode .line-no{padding:0 9px 0 5px}",
+  "body.notion-embed-mode .line-body{padding:0 12px}",
+  "body.notion-embed-mode .proof-steps summary{padding:12px 16px}",
+  "body.notion-embed-mode .steps-body{padding:0 16px 14px}",
+  "body.notion-embed-mode.code-view .natural-language{display:none}",
+  "body.notion-embed-mode.code-view .split{display:block}",
+  "body.notion-embed-mode.code-view .proof-steps{display:none}",
+  "body.notion-embed-mode.code-view .lean-code{border:0}",
+  "</style>",
+  "<script>",
+  "document.addEventListener('DOMContentLoaded',()=>{",
+  " const params=new URLSearchParams(window.location.search);",
+  " const entryId=params.get('entry');",
+  " if(!entryId)return;",
+  " const target=document.getElementById(entryId);",
+  " if(!target){document.body.innerHTML='<div style=\"padding:16px;font-family:sans-serif\">Entry not found: '+entryId+'</div>';return;}",
+  " document.body.classList.add('single-entry-mode');",
+  " if(params.get('embed')==='1'||params.get('embed')==='true')document.body.classList.add('notion-embed-mode');",
+  " if(params.get('view')==='code')document.body.classList.add('code-view');",
+  " document.querySelectorAll('main > *').forEach(el=>{if(el!==target)el.style.display='none';});",
+  " setTimeout(()=>window.scrollTo(0,0),0);",
+  "});",
+  "</script>"
+]
+
 /--
 `lake exe miniblueprint-html` で `blueprint.html` を生成します。
 Lean コードと行番号は同じリポジトリ内の実ファイルから毎回取得します。
 Notion 本文に加えて、`Lean declarations` が設定された Notion ページを対応する
 Lean カードの直前へ差し込みます。
+
+生成ページでは `?entry=<entry-id>&embed=1` を付けると、指定した項目だけを
+Notion 埋め込み向けのコンパクト表示にできます。`&view=code` を追加すると
+Lean コード中心の表示になります。
 -/
 def main : IO Unit := do
   let output := "blueprint.html"
@@ -39,6 +82,7 @@ def main : IO Unit := do
     (fun current page =>
       current.replace (linkedMarker page.htmlMarker) page.html)
     html
+  let html := html.replace "</body>" (notionEmbedSupport ++ "\n</body>")
   IO.FS.writeFile output html
   IO.println "Lean sources refreshed from this repository"
   IO.println s!"Notion section inserted; linked pages: {Notion.Section010101.linkedPages.size}"
