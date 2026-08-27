@@ -5,23 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lean Code Viewer</title>
   <style>
-    :root{color-scheme:light dark;--bg:#f7f7f5;--panel:#fff;--border:#e5e5e0;--text:#2f3437;--muted:#787774;--code-bg:#f3f3f2;--keyword:#7c3aed;--decl:#a21caf;--function:#2563eb;--predicate:#0891b2;--member:#c2410c;--type:#b45309;--constructor:#0f766e;--var:#1f2937;--sort:#b45309;--literal:#047857;--comment:#6b7280;--punct:#6b7280;--module:#4f46e5;--unknown:#374151}
-    @media(prefers-color-scheme:dark){:root{--bg:#191919;--panel:#202020;--border:#343434;--text:#e6e6e6;--muted:#aaa;--code-bg:#252525;--keyword:#c4b5fd;--decl:#f0abfc;--function:#93c5fd;--predicate:#67e8f9;--member:#fdba74;--type:#fcd34d;--constructor:#5eead4;--var:#e5e7eb;--sort:#fcd34d;--literal:#6ee7b7;--comment:#9ca3af;--punct:#b6bbc5;--module:#a5b4fc;--unknown:#d1d5db}}
+    :root{color-scheme:dark;--bg:#1e1e1e;--panel:#181818;--border:#3c3c3c;--text:#d4d4d4;--muted:#858585;--code-bg:#1e1e1e;--keyword:#c586c0;--decl:#dcdcaa;--function:#4fc1ff;--predicate:#4ec9b0;--member:#ce9178;--type:#4ec9b0;--constructor:#d7ba7d;--var:#9cdcfe;--sort:#4ec9b0;--literal:#b5cea8;--comment:#6a9955;--punct:#d4d4d4;--module:#c8c8c8;--unknown:#d4d4d4}
     *{box-sizing:border-box}
     body{margin:0;padding:10px;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    .viewer{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--panel)}
-    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px}
-    .filename{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .viewer{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--panel);box-shadow:0 0 0 1px rgba(255,255,255,.02)}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;background:#181818}
+    .filename{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#b3b3b3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .actions{display:flex;gap:6px;flex-shrink:0}
-    button,a.button{border:1px solid var(--border);border-radius:7px;background:var(--panel);color:var(--text);padding:5px 8px;font-size:11px;cursor:pointer;text-decoration:none}
+    button,a.button{border:1px solid #454545;border-radius:7px;background:#252526;color:#cccccc;padding:5px 8px;font-size:11px;cursor:pointer;text-decoration:none}
+    button:hover,a.button:hover{background:#2d2d30}
     .code-wrap{overflow:auto;background:var(--code-bg)}
     .code-grid{display:grid;grid-template-columns:auto minmax(max-content,1fr);align-items:start;min-width:max-content}
     pre{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.35;tab-size:2}
-    .line-nos{user-select:none;text-align:right;color:var(--muted);padding:6px 10px;border-right:1px solid var(--border)}
-    .code-pre{padding:6px 14px;white-space:pre;color:var(--text)}
-    .error{padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap}
-    .empty-state{padding:20px 18px;background:var(--panel);color:var(--text);font-size:13px;line-height:1.7}
-    .empty-state code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--code-bg);border:1px solid var(--border);border-radius:5px;padding:2px 5px}
+    .line-nos{user-select:none;text-align:right;color:var(--muted);padding:6px 10px;border-right:1px solid #333333;background:#1e1e1e}
+    .code-pre{padding:6px 14px;white-space:pre;color:var(--text);background:#1e1e1e}
+    .error{padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;background:#1e1e1e;color:var(--text)}
+    .empty-state{padding:20px 18px;background:#1e1e1e;color:var(--text);font-size:13px;line-height:1.7}
+    .empty-state code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:#252526;border:1px solid var(--border);border-radius:5px;padding:2px 5px}
 
     /* Lean/SubVerso semantic token classes */
     .lean-token.keyword,.lean-token.built-in{color:var(--keyword);font-weight:600}
