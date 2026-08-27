@@ -20,6 +20,8 @@
     .line-nos{user-select:none;text-align:right;color:var(--muted);padding:6px 10px;border-right:1px solid var(--border)}
     .code-pre{padding:6px 14px;white-space:pre;color:var(--text)}
     .error{padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap}
+    .empty-state{padding:20px 18px;background:var(--panel);color:var(--text);font-size:13px;line-height:1.7}
+    .empty-state code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--code-bg);border:1px solid var(--border);border-radius:5px;padding:2px 5px}
 
     /* Lean/SubVerso semantic token classes */
     .lean-token.keyword,.lean-token.built-in{color:var(--keyword);font-weight:600}
@@ -37,7 +39,7 @@
 <body>
   <div class="viewer">
     <div class="toolbar">
-      <div id="filename" class="filename">Loading…</div>
+      <div id="filename" class="filename">Lean Code Viewer</div>
       <div class="actions">
         <button id="reloadBtn" type="button">Reload</button>
         <button id="copyBtn" type="button">Copy</button>
@@ -52,7 +54,7 @@
     const repo='SerreNumberTheoryBlueprint';
     const branch=params.get('branch')||'notion-display-from-before-miniblueprint-2026-08-26';
     const file=params.get('file')||'SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean';
-    const decl=params.get('decl')||'myFrobenius_injective';
+    const decl=params.get('decl');
     const codeWrap=document.getElementById('codeWrap');
     const filenameEl=document.getElementById('filename');
     const copyBtn=document.getElementById('copyBtn');
@@ -60,7 +62,7 @@
     const githubBtn=document.getElementById('githubBtn');
     let displayedCode='';
 
-    filenameEl.textContent=decl?`${file} — ${decl}`:file;
+    filenameEl.textContent=decl?`${file} — ${decl}`:'Lean Code Viewer — 表示対象未指定';
     githubBtn.href=`https://github.com/${owner}/${repo}/blob/${branch}/${file}`;
 
     function escapeHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
@@ -71,6 +73,11 @@
       const short=target.split('.').at(-1);
       return name===short||name.endsWith(`.${short}`);
     }
+    function showEmptyState(){
+      displayedCode='';
+      copyBtn.disabled=true;
+      codeWrap.innerHTML=`<div class="empty-state"><strong>表示する Lean 宣言を指定してください。</strong><br><br>URL に <code>?file=...&amp;decl=...</code> を付けると、その定理・補題・定義だけを表示します。<br>例：<code>?file=SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean&amp;decl=myFrobenius_injective</code></div>`;
+    }
     function enrichSemanticHtml(html,item){
       const host=document.createElement('div');
       host.innerHTML=html;
@@ -79,8 +86,6 @@
         const txt=(el.textContent||'').trim();
         if(defined.includes(txt)) el.classList.add('declaration');
         const title=(el.getAttribute('title')||'').trim();
-        // SubVerso gives a signature in title for constants. Type-valued constants often expose
-        // `Type`, `Sort`, `Prop`, or common type constructor signatures; style those separately.
         if(/(?:^|\s)(?:Type(?:\s|$)|Sort(?:\s|$)|Prop(?:\s|$))/.test(title) || /→\s*(?:Type|Sort|Prop)\b/.test(title)){
           el.classList.add('type-like');
         }
@@ -99,6 +104,7 @@
     function renderSemantic(item){
       const x=trimRendered(item);
       displayedCode=x.text;
+      copyBtn.disabled=false;
       const lines=x.text.split('\n');
       while(lines.length>1&&lines.at(-1)==='')lines.pop();
       const first=x.startLine||1;
@@ -128,6 +134,7 @@
     }
     function renderFallback(code,firstLine=1){
       displayedCode=code;
+      copyBtn.disabled=false;
       const rows=code.split('\n').map((line,index)=>`<tr><td>${firstLine+index}</td><td>${highlightFallback(line)||'&nbsp;'}</td></tr>`).join('');
       codeWrap.innerHTML=`<table style="border-collapse:collapse;width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.35"><tbody>${rows}</tbody></table>`;
       [...codeWrap.querySelectorAll('td:nth-child(1)')].forEach(td=>{td.style.cssText='user-select:none;width:1%;min-width:42px;padding:3px 10px;text-align:right;color:var(--muted);border-right:1px solid var(--border);vertical-align:top'});
@@ -138,10 +145,11 @@
       const r=await fetch(u,{cache:'no-store'});
       if(!r.ok)throw new Error(`HTTP ${r.status}: ${r.statusText}`);
       const source=await r.text();
-      const x=decl?extractDeclaration(source,decl):{code:source,startLine:1};
+      const x=extractDeclaration(source,decl);
       renderFallback(x.code,x.startLine);
     }
     async function loadCode(){
+      if(!decl){showEmptyState();return}
       codeWrap.innerHTML='<div class="error">Loading semantic Lean highlighting…</div>';
       try{
         const moduleName=moduleNameFromFile(file);
@@ -149,16 +157,16 @@
         const r=await fetch(u,{cache:'no-store'});
         if(!r.ok)throw new Error(`Semantic data HTTP ${r.status}`);
         const data=await r.json();
-        const item=decl?data.items.find(it=>(it.defines||[]).some(name=>declarationMatches(name,decl))):null;
-        if(decl&&!item)throw new Error(`Semantic declaration "${decl}" was not found.`);
-        if(item)renderSemantic(item);else await loadFallback();
+        const item=data.items.find(it=>(it.defines||[]).some(name=>declarationMatches(name,decl)));
+        if(!item)throw new Error(`Semantic declaration "${decl}" was not found.`);
+        renderSemantic(item);
       }catch(e){
         console.warn('Semantic highlighting unavailable; using fallback.',e);
         try{await loadFallback()}catch(e2){codeWrap.innerHTML=`<div class="error">${escapeHtml(String(e2))}</div>`}
       }
     }
     reloadBtn.addEventListener('click',loadCode);
-    copyBtn.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(displayedCode);copyBtn.textContent='Copied!';setTimeout(()=>copyBtn.textContent='Copy',1200)}catch{copyBtn.textContent='Copy failed'}});
+    copyBtn.addEventListener('click',async()=>{if(!displayedCode)return;try{await navigator.clipboard.writeText(displayedCode);copyBtn.textContent='Copied!';setTimeout(()=>copyBtn.textContent='Copy',1200)}catch{copyBtn.textContent='Copy failed'}});
     loadCode();
   </script>
 </body>
