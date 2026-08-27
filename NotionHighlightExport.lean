@@ -13,8 +13,8 @@ private def escapeHtml (s : String) : String :=
     |>.replace "\"" "&quot;"
 
 private def tokenTitle : Token.Kind → Option String
-  | .const _ signature docs _ _ => docs.orElse (some signature)
-  | .anonCtor _ signature docs _ => docs.orElse (some signature)
+  | .const _ signature docs _ _ => docs.orElse (fun _ => some signature)
+  | .anonCtor _ signature docs _ => docs.orElse (fun _ => some signature)
   | .var _ type _ => some type
   | .wildcard type _ => some type
   | .option _ _ docs => docs
@@ -28,7 +28,7 @@ private def renderToken (tok : Token) : String × String :=
   let title := tokenTitle tok.kind |>.map (fun t => s!" title=\"{escapeHtml t}\"") |>.getD ""
   (s!"<span class=\"lean-token {cls}\"{title}>{escapeHtml tok.content}</span>", tok.content)
 
-partial private def renderHighlighted : Highlighted → String × String
+private partial def renderHighlighted : Highlighted → String × String
   | .token tok => renderToken tok
   | .text s => (escapeHtml s, s)
   | .unparsed s => (s!"<span class=\"lean-token unknown\">{escapeHtml s}</span>", s)
