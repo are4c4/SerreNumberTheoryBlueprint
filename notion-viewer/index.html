@@ -39,7 +39,23 @@
     githubBtn.href=`https://github.com/${owner}/${repo}/blob/${branch}/${file}`;
     function escapeHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
     function highlightLean(line){let h=escapeHtml(line),i=h.indexOf('--'),c=i>=0?h.slice(0,i):h,cm=i>=0?h.slice(i):'';c=c.replace(/\b(theorem|lemma|example|def|abbrev|structure|class|instance|namespace|section|end|variable|variables|universe|open|export|noncomputable|private|protected|mutual|where|deriving|inductive|omit|include)\b/g,'<span class="kw">$1</span>');c=c.replace(/\b(import|by|simp|simpa|rw|rfl|exact|apply|intro|intros|constructor|cases|induction|have|show|calc|refine|rcases|aesop|omega|linarith|norm_num|ring|field_simp|positivity|decide)\b/g,'<span class="cmd">$1</span>');c=c.replace(/\b(Type|Prop|Nat|Int|Rat|Real|Complex|Fin|Set|Field|Ring|Group|Monoid|AddGroup|CommRing|IntegralDomain|Function)\b/g,'<span class="type">$1</span>');if(cm)c+=`<span class="comment">${cm}</span>`;return c}
-    function extractDeclaration(source,name){const lines=source.split('\n');const p=/^\s*(?:@\[[^\]]*\]\s*)?(?:noncomputable\s+)?(?:theorem|lemma|example|def|abbrev|instance|structure|class|inductive)\s+([^\s(:{]+)/;let start=-1;for(let i=0;i<lines.length;i++){const m=lines[i].match(p);if(m&&m[1]===name){start=i;break}}if(start===-1)throw new Error(`Declaration "${name}" was not found in ${file}.`);let end=lines.length;for(let i=start+1;i<lines.length;i++){if(lines[i].match(p)){end=i;break}}while(end>start&&lines[end-1].trim()==='')end--;return{code:lines.slice(start,end).join('\n'),startLine:start+1}}
+    function extractDeclaration(source,name){
+      const lines=source.split('\n');
+      const declPattern=/^\s*(?:@\[[^\]]*\]\s*)?(?:noncomputable\s+)?(?:theorem|lemma|example|def|abbrev|instance|structure|class|inductive)\s+([^\s(:{]+)/;
+      const topLevelCommand=/^(?:@\[[^\]]*\]\s*)?(?:(?:noncomputable|private|protected)\s+)?(?:theorem|lemma|example|def|abbrev|instance|structure|class|inductive|namespace|section|end|variable|variables|universe|open|export|include|omit|attribute|set_option|local\s+instance)\b/;
+      let start=-1;
+      for(let i=0;i<lines.length;i++){
+        const m=lines[i].match(declPattern);
+        if(m&&m[1]===name){start=i;break}
+      }
+      if(start===-1)throw new Error(`Declaration "${name}" was not found in ${file}.`);
+      let end=lines.length;
+      for(let i=start+1;i<lines.length;i++){
+        if(topLevelCommand.test(lines[i])){end=i;break}
+      }
+      while(end>start&&lines[end-1].trim()==='')end--;
+      return{code:lines.slice(start,end).join('\n'),startLine:start+1}
+    }
     function renderCode(code,firstLine=1){displayedCode=code;const rows=code.split('\n').map((line,index)=>`<tr><td class="line-no">${firstLine+index}</td><td class="code-line">${highlightLean(line)||'&nbsp;'}</td></tr>`).join('');codeWrap.innerHTML=`<table><tbody>${rows}</tbody></table>`}
     async function loadCode(){codeWrap.innerHTML='<div class="error">Loading…</div>';const u=`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${file}?t=${Date.now()}`;try{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}: ${r.statusText}`);const source=await r.text();if(decl){const x=extractDeclaration(source,decl);renderCode(x.code,x.startLine)}else renderCode(source,1)}catch(e){codeWrap.innerHTML=`<div class="error">${escapeHtml(String(e))}</div>`}}
     reloadBtn.addEventListener('click',loadCode);
