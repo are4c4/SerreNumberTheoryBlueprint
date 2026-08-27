@@ -23,10 +23,42 @@ private def tokenTitle : Token.Kind → Option String
   | .num type _ => type
   | _ => none
 
+private def tokenMetadata : Token.Kind → String
+  | .const name signature _ isDef _ =>
+      s!" data-semantic=\"const\" data-const-name=\"{escapeHtml (toString name)}\" data-signature=\"{escapeHtml signature}\" data-definition-site=\"{toString isDef}\""
+  | .anonCtor name signature _ _ =>
+      s!" data-semantic=\"constructor\" data-const-name=\"{escapeHtml (toString name)}\" data-signature=\"{escapeHtml signature}\""
+  | .var _ type _ =>
+      s!" data-semantic=\"variable\" data-signature=\"{escapeHtml type}\""
+  | .wildcard type _ =>
+      s!" data-semantic=\"wildcard\" data-signature=\"{escapeHtml type}\""
+  | .sort _ => " data-semantic=\"sort\""
+  | .moduleName name =>
+      s!" data-semantic=\"module\" data-const-name=\"{escapeHtml (toString name)}\""
+  | .num type _ =>
+      let ty := type.map (fun t => s!" data-signature=\"{escapeHtml t}\"") |>.getD ""
+      s!" data-semantic=\"number\"{ty}"
+  | .str _ _ => " data-semantic=\"string\""
+  | .char _ => " data-semantic=\"char\""
+  | .docComment => " data-semantic=\"doc-comment\""
+  | .lineComment | .blockComment | .commentDelim => " data-semantic=\"comment\""
+  | .keyword .. => " data-semantic=\"keyword\""
+  | .operator .. => " data-semantic=\"operator\""
+  | .bracket .. => " data-semantic=\"bracket\""
+  | .separator .. => " data-semantic=\"separator\""
+  | .delim .. => " data-semantic=\"delimiter\""
+  | .option .. => " data-semantic=\"option\""
+  | .withType type => s!" data-semantic=\"typed\" data-signature=\"{escapeHtml type}\""
+  | .levelVar .. => " data-semantic=\"level-var\""
+  | .levelConst .. => " data-semantic=\"level-const\""
+  | .levelOp .. => " data-semantic=\"level-op\""
+  | .unknown => " data-semantic=\"unknown\""
+
 private def renderToken (tok : Token) : String × String :=
   let cls := tok.kind.cssClass
   let title := tokenTitle tok.kind |>.map (fun t => s!" title=\"{escapeHtml t}\"") |>.getD ""
-  (s!"<span class=\"lean-token {cls}\"{title}>{escapeHtml tok.content}</span>", tok.content)
+  let metadata := tokenMetadata tok.kind
+  (s!"<span class=\"lean-token {cls}\"{title}{metadata}>{escapeHtml tok.content}</span>", tok.content)
 
 private partial def renderHighlighted : Highlighted → String × String
   | .token tok => renderToken tok
