@@ -20,3 +20,7 @@ lean_lib MiniBlueprint where
 /-- Generate `blueprint.html` from the real formalization files in this repository. -/
 lean_exe «miniblueprint-html» where
   root := `HtmlMain
+
+/-- Convert SubVerso semantic highlighting data into lightweight JSON for the Notion viewer. -/
+lean_exe «notion-highlight-export» where
+  root := `NotionHighlightExport
