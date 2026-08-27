@@ -118,10 +118,14 @@
       if(trailing)text=text.slice(0,-trailing.length);
       return{...item,text,html};
     }
-    function renderHtmlLines(htmlLines,text,firstLine){
+    function renderRows(rows,text){
       displayedCode=text;copyBtn.disabled=false;
-      const nums=htmlLines.map((_,i)=>firstLine+i).join('\n');
-      codeWrap.innerHTML=`<div class="code-grid"><pre class="line-nos">${nums}</pre><pre class="code-pre">${htmlLines.join('\n')}</pre></div>`;
+      const nums=rows.map(r=>r.lineNo==null?'':r.lineNo).join('\n');
+      const html=rows.map(r=>r.html||'').join('\n');
+      codeWrap.innerHTML=`<div class="code-grid"><pre class="line-nos">${nums}</pre><pre class="code-pre">${html}</pre></div>`;
+    }
+    function renderHtmlLines(htmlLines,text,firstLine){
+      renderRows(htmlLines.map((html,i)=>({lineNo:firstLine+i,html})),text);
     }
     function renderSemantic(item){
       const x=trimRendered(item);const lines=x.text.split('\n');while(lines.length>1&&lines.at(-1)==='')lines.pop();
@@ -153,6 +157,88 @@
       if(end===-1)throw new Error(`Matching end for ${kind} "${name}" was not found.`);
       return{code:lines.slice(start,end+1).join('\n'),startLine:start+1,endLine:end+1};
     }
+    function identifiers(text){
+      return new Set(text.match(/[A-Za-z_][A-Za-z0-9_']*/g)||[]);
+    }
+    function variableDeclaredNames(line){
+      const names=[];
+      const re=/[({]\s*([A-Za-z_][A-Za-z0-9_']*(?:\s+[A-Za-z_][A-Za-z0-9_']*)*)\s*:/g;
+      for(const m of line.matchAll(re))names.push(...m[1].trim().split(/\s+/));
+      return names;
+    }
+    function activeVariableDeclarations(source,beforeLine){
+      const lines=source.split('\n');
+      const scopes=[[]];
+      for(let i=0;i<Math.min(beforeLine-1,lines.length);i++){
+        const line=lines[i];
+        if(/^\s*end(?:\s+[^\s]+)?\s*(?:--.*)?$/.test(line)){
+          if(scopes.length>1)scopes.pop();
+          continue;
+        }
+        if(/^\s*(?:namespace|section)\b/.test(line)){
+          scopes.push([]);
+          continue;
+        }
+        if(/^\s*variables?\b/.test(line)){
+          scopes[scopes.length-1].push({lineNo:i+1,text:line,names:variableDeclaredNames(line)});
+        }
+      }
+      return scopes.flat();
+    }
+    function relevantVariableDeclarations(source,beforeLine,declText){
+      const candidates=activeVariableDeclarations(source,beforeLine);
+      if(!candidates.length)return [];
+      const allDeclared=new Set(candidates.flatMap(c=>c.names));
+      const needed=identifiers(declText);
+      const selected=new Set();
+      let changed=true;
+      while(changed){
+        changed=false;
+        for(let i=candidates.length-1;i>=0;i--){
+          if(selected.has(i))continue;
+          const c=candidates[i];
+          const refs=identifiers(c.text);
+          const declaresNeeded=c.names.some(n=>needed.has(n));
+          const assumptionForNeeded=c.names.length===0&&[...refs].some(r=>needed.has(r));
+          if(declaresNeeded||assumptionForNeeded){
+            selected.add(i);changed=true;
+            for(const r of refs)if(allDeclared.has(r))needed.add(r);
+          }
+        }
+      }
+      return candidates.filter((_,i)=>selected.has(i));
+    }
+    function semanticLineMap(data){
+      const map=new Map();
+      for(const item of (data.items||[])){
+        const x=trimRendered(item);if(!x.text||!x.startLine)continue;
+        const sem=enrichSemanticHtml(x.html,x).split('\n');
+        const txt=x.text.split('\n');
+        for(let j=0;j<Math.min(sem.length,txt.length);j++)map.set(x.startLine+j,sem[j]);
+      }
+      return map;
+    }
+    function renderDeclarationWithContext(source,data,item){
+      const x=trimRendered(item);
+      const theoremLines=x.text.split('\n');while(theoremLines.length>1&&theoremLines.at(-1)==='')theoremLines.pop();
+      const vars=relevantVariableDeclarations(source,x.startLine||1,theoremLines.join('\n'));
+      const semMap=semanticLineMap(data);
+      const rows=[];
+      for(const v of vars)rows.push({lineNo:v.lineNo,html:semMap.get(v.lineNo)||highlightFallback(v.text)});
+      if(vars.length)rows.push({lineNo:null,html:''});
+      const theoremHtml=enrichSemanticHtml(x.html,x).split('\n').slice(0,theoremLines.length);
+      for(let i=0;i<theoremLines.length;i++)rows.push({lineNo:(x.startLine||1)+i,html:theoremHtml[i]||highlightFallback(theoremLines[i])});
+      const text=(vars.length?vars.map(v=>v.text).join('\n')+'\n\n':'')+theoremLines.join('\n');
+      renderRows(rows,text);
+    }
+    function renderFallbackDeclarationWithContext(source,block){
+      const vars=relevantVariableDeclarations(source,block.startLine,block.code);
+      const rows=vars.map(v=>({lineNo:v.lineNo,html:highlightFallback(v.text)}));
+      if(vars.length)rows.push({lineNo:null,html:''});
+      for(const [i,line] of block.code.split('\n').entries())rows.push({lineNo:block.startLine+i,html:highlightFallback(line)});
+      const text=(vars.length?vars.map(v=>v.text).join('\n')+'\n\n':'')+block.code;
+      renderRows(rows,text);
+    }
     function renderFallbackBlock(block){const lines=block.code.split('\n');renderHtmlLines(lines.map(highlightFallback),block.code,block.startLine)}
     function renderSemanticBlock(block,data){
       const sourceLines=block.code.split('\n');const htmlLines=sourceLines.map(highlightFallback);
@@ -172,15 +258,20 @@
       codeWrap.innerHTML='<div class="error">Loading Lean highlighting…</div>';
       try{
         if(targetType==='decl'){
-          const data=await fetchSemantic();const item=data.items.find(it=>(it.defines||[]).some(name=>declarationMatches(name,targetName)));
-          if(!item)throw new Error(`Semantic declaration "${targetName}" was not found.`);renderSemantic(item);return;
+          const [data,source]=await Promise.all([fetchSemantic(),fetchSource()]);
+          const item=data.items.find(it=>(it.defines||[]).some(name=>declarationMatches(name,targetName)));
+          if(!item)throw new Error(`Semantic declaration "${targetName}" was not found.`);
+          renderDeclarationWithContext(source,data,item);return;
         }
         const source=await fetchSource();const block=extractScope(source,targetType,targetName);
         try{const data=await fetchSemantic();renderSemanticBlock(block,data)}catch(e){console.warn('Semantic highlighting unavailable for scope; using fallback.',e);renderFallbackBlock(block)}
       }catch(e){
         console.warn('Primary rendering failed; using source fallback.',e);
-        try{const source=await fetchSource();const block=targetType==='decl'?extractDeclaration(source,targetName):extractScope(source,targetType,targetName);renderFallbackBlock(block)}
-        catch(e2){codeWrap.innerHTML=`<div class="error">${escapeHtml(String(e2))}</div>`}
+        try{
+          const source=await fetchSource();
+          if(targetType==='decl'){renderFallbackDeclarationWithContext(source,extractDeclaration(source,targetName));return}
+          renderFallbackBlock(extractScope(source,targetType,targetName));
+        }catch(e2){codeWrap.innerHTML=`<div class="error">${escapeHtml(String(e2))}</div>`}
       }
     }
     reloadBtn.addEventListener('click',loadCode);
