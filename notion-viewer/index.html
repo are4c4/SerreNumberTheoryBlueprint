@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lean Code Viewer</title>
   <style>
-    :root{color-scheme:light dark;--bg:#f7f7f5;--panel:#fff;--border:#e5e5e0;--text:#2f3437;--muted:#787774;--code-bg:#f3f3f2;--keyword:#7c3aed;--const:#2563eb;--var:#1f2937;--sort:#b45309;--literal:#0f766e;--comment:#6b7280;--punct:#6b7280;--unknown:#374151}
-    @media(prefers-color-scheme:dark){:root{--bg:#191919;--panel:#202020;--border:#343434;--text:#e6e6e6;--muted:#aaa;--code-bg:#252525;--keyword:#c4b5fd;--const:#93c5fd;--var:#e5e7eb;--sort:#fcd34d;--literal:#5eead4;--comment:#9ca3af;--punct:#b6bbc5;--unknown:#d1d5db}}
+    :root{color-scheme:light dark;--bg:#f7f7f5;--panel:#fff;--border:#e5e5e0;--text:#2f3437;--muted:#787774;--code-bg:#f3f3f2;--keyword:#7c3aed;--decl:#a21caf;--const:#2563eb;--type:#b45309;--var:#1f2937;--sort:#b45309;--literal:#0f766e;--comment:#6b7280;--punct:#6b7280;--unknown:#374151}
+    @media(prefers-color-scheme:dark){:root{--bg:#191919;--panel:#202020;--border:#343434;--text:#e6e6e6;--muted:#aaa;--code-bg:#252525;--keyword:#c4b5fd;--decl:#f0abfc;--const:#93c5fd;--type:#fcd34d;--var:#e5e7eb;--sort:#fcd34d;--literal:#5eead4;--comment:#9ca3af;--punct:#b6bbc5;--unknown:#d1d5db}}
     *{box-sizing:border-box}
     body{margin:0;padding:10px;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
     .viewer{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--panel)}
@@ -21,11 +21,12 @@
     .code-pre{padding:6px 14px;white-space:pre;color:var(--text)}
     .error{padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap}
 
-    /* SubVerso semantic token classes. These are produced by Lean itself. */
+    /* Lean/SubVerso semantic token classes */
     .lean-token.keyword,.lean-token.built-in{color:var(--keyword);font-weight:600}
+    .lean-token.declaration{color:var(--decl);font-weight:600}
     .lean-token.const,.lean-token.module-name,.lean-token.option{color:var(--const)}
+    .lean-token.type-like,.lean-token.sort,.lean-token.level-var,.lean-token.level-const,.lean-token.level-op{color:var(--type)}
     .lean-token.var,.lean-token.wildcard,.lean-token.typed{color:var(--var)}
-    .lean-token.sort,.lean-token.level-var,.lean-token.level-const,.lean-token.level-op{color:var(--sort)}
     .lean-token.literal{color:var(--literal)}
     .lean-token.comment,.lean-token.doc-comment{color:var(--comment);font-style:italic}
     .lean-token.punctuation,.lean-token.delim{color:var(--punct)}
@@ -70,9 +71,23 @@
       const short=target.split('.').at(-1);
       return name===short||name.endsWith(`.${short}`);
     }
+    function enrichSemanticHtml(html,item){
+      const host=document.createElement('div');
+      host.innerHTML=html;
+      const defined=(item.defines||[]).map(x=>x.split('.').at(-1));
+      host.querySelectorAll('.lean-token.const').forEach(el=>{
+        const txt=(el.textContent||'').trim();
+        if(defined.includes(txt)) el.classList.add('declaration');
+        const title=(el.getAttribute('title')||'').trim();
+        // SubVerso gives a signature in title for constants. Type-valued constants often expose
+        // `Type`, `Sort`, `Prop`, or common type constructor signatures; style those separately.
+        if(/(?:^|\s)(?:Type(?:\s|$)|Sort(?:\s|$)|Prop(?:\s|$))/.test(title) || /→\s*(?:Type|Sort|Prop)\b/.test(title)){
+          el.classList.add('type-like');
+        }
+      });
+      return host.innerHTML;
+    }
     function trimRendered(item){
-      // SubVerso may retain leading/trailing whitespace around a command. Trim blank lines only;
-      // semantic spans inside the declaration are left untouched.
       let text=item.text||'';
       let html=item.html||'';
       const leading=(text.match(/^(?:[ \t]*\n)+/)||[''])[0];
@@ -88,10 +103,10 @@
       while(lines.length>1&&lines.at(-1)==='')lines.pop();
       const first=x.startLine||1;
       const nums=lines.map((_,i)=>first+i).join('\n');
-      codeWrap.innerHTML=`<div class="code-grid"><pre class="line-nos">${nums}</pre><pre class="code-pre">${x.html}</pre></div>`;
+      const semanticHtml=enrichSemanticHtml(x.html,x);
+      codeWrap.innerHTML=`<div class="code-grid"><pre class="line-nos">${nums}</pre><pre class="code-pre">${semanticHtml}</pre></div>`;
     }
 
-    // Fallback highlighter used only if semantic data is unavailable.
     function highlightFallback(line){
       let h=escapeHtml(line),i=h.indexOf('--'),c=i>=0?h.slice(0,i):h,cm=i>=0?h.slice(i):'';
       c=c.replace(/\b(theorem|lemma|example|def|abbrev|structure|class|instance|namespace|section|end|variable|variables|universe|open|export|noncomputable|private|protected|mutual|where|deriving|inductive|omit|include)\b/g,'<span class="lean-token keyword">$1</span>');
