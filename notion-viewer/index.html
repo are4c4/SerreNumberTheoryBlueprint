@@ -22,8 +22,6 @@
     .error{padding:14px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;background:#1e1e1e;color:var(--text)}
     .empty-state{padding:20px 18px;background:#1e1e1e;color:var(--text);font-size:13px;line-height:1.7}
     .empty-state code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:#252526;border:1px solid var(--border);border-radius:5px;padding:2px 5px}
-
-    /* Lean/SubVerso semantic token classes */
     .lean-token.keyword,.lean-token.built-in{color:var(--keyword);font-weight:600}
     .lean-token.declaration{color:var(--decl)!important;font-weight:650}
     .lean-token.function-like{color:var(--function)}
@@ -60,6 +58,11 @@
     const branch=params.get('branch')||'notion-display-from-before-miniblueprint-2026-08-26';
     const file=params.get('file')||'SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean';
     const decl=params.get('decl');
+    const sectionName=params.get('section');
+    const namespaceName=params.get('namespace');
+    const targets=[['decl',decl],['section',sectionName],['namespace',namespaceName]].filter(([,v])=>v);
+    const targetType=targets.length===1?targets[0][0]:null;
+    const targetName=targets.length===1?targets[0][1]:null;
     const codeWrap=document.getElementById('codeWrap');
     const filenameEl=document.getElementById('filename');
     const copyBtn=document.getElementById('copyBtn');
@@ -67,10 +70,11 @@
     const githubBtn=document.getElementById('githubBtn');
     let displayedCode='';
 
-    filenameEl.textContent=decl?`${file} — ${decl}`:'Lean Code Viewer — 表示対象未指定';
+    filenameEl.textContent=targetType?`${file} — ${targetType} ${targetName}`:'Lean Code Viewer — 表示対象未指定';
     githubBtn.href=`https://github.com/${owner}/${repo}/blob/${branch}/${file}`;
 
     function escapeHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+    function escapeRegExp(t){return t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
     function moduleNameFromFile(path){return path.replace(/\.lean$/,'').replaceAll('/','.')}
     function declarationMatches(name,target){
       if(name===target)return true;
@@ -78,64 +82,28 @@
       const short=target.split('.').at(-1);
       return name===short||name.endsWith(`.${short}`);
     }
-    function showEmptyState(){
-      displayedCode='';
-      copyBtn.disabled=true;
-      codeWrap.innerHTML=`<div class="empty-state"><strong>表示する Lean 宣言を指定してください。</strong><br><br>URL に <code>?file=...&amp;decl=...</code> を付けると、その定理・補題・定義だけを表示します。<br>例：<code>?file=SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean&amp;decl=myFrobenius_injective</code></div>`;
+    function showEmptyState(message){
+      displayedCode='';copyBtn.disabled=true;
+      codeWrap.innerHTML=`<div class="empty-state"><strong>${message||'表示する Lean コードを指定してください。'}</strong><br><br>
+        宣言：<code>?file=...&amp;decl=myTheorem</code><br>
+        section：<code>?file=...&amp;section=FiniteFieldCardinality</code><br>
+        namespace：<code>?file=...&amp;namespace=SerreNumberTheory</code><br><br>
+        <code>decl</code>・<code>section</code>・<code>namespace</code> は1つだけ指定してください。</div>`;
     }
-    function previousVisibleText(el){
-      let node=el.previousSibling;
-      while(node){
-        const text=(node.textContent||'');
-        if(text.length)return text;
-        node=node.previousSibling;
-      }
-      return '';
-    }
+    function previousVisibleText(el){let node=el.previousSibling;while(node){const text=node.textContent||'';if(text.length)return text;node=node.previousSibling}return ''}
     function classifyConst(el,defined){
-      const txt=(el.textContent||'').trim();
-      const fullName=el.dataset.constName||'';
-      const signature=(el.dataset.signature||el.getAttribute('title')||'').trim();
-      const shortFull=fullName.split('.').at(-1)||'';
-
-      if(defined.includes(txt)||defined.includes(shortFull)){
-        el.classList.add('declaration');
-        return;
-      }
-
-      const prev=previousVisibleText(el).trimEnd();
-      if(prev.endsWith('.')){
-        el.classList.add('member-like');
-        return;
-      }
-
-      if(/(?:^|[\s(:→])Prop\b|:\s*Prop\b|→\s*Prop\b/.test(signature)){
-        el.classList.add('predicate-like');
-        return;
-      }
-      if(/(?:^|[\s(:→])(?:Type|Sort)\b|:\s*(?:Type|Sort)\b|→\s*(?:Type|Sort)\b/.test(signature)){
-        el.classList.add('type-like');
-        return;
-      }
-
-      if(el.dataset.semantic==='constructor'){
-        el.classList.add('constructor-like');
-        return;
-      }
-
-      const lastPart=txt.split('.').at(-1)||txt;
-      if(/^[A-ZΑ-Ω]/u.test(lastPart)){
-        el.classList.add('type-like');
-        return;
-      }
-
+      const txt=(el.textContent||'').trim();const fullName=el.dataset.constName||'';const signature=(el.dataset.signature||el.getAttribute('title')||'').trim();const shortFull=fullName.split('.').at(-1)||'';
+      if(defined.includes(txt)||defined.includes(shortFull)){el.classList.add('declaration');return}
+      if(previousVisibleText(el).trimEnd().endsWith('.')){el.classList.add('member-like');return}
+      if(/(?:^|[\s(:→])Prop\b|:\s*Prop\b|→\s*Prop\b/.test(signature)){el.classList.add('predicate-like');return}
+      if(/(?:^|[\s(:→])(?:Type|Sort)\b|:\s*(?:Type|Sort)\b|→\s*(?:Type|Sort)\b/.test(signature)){el.classList.add('type-like');return}
+      if(el.dataset.semantic==='constructor'){el.classList.add('constructor-like');return}
+      const lastPart=txt.split('.').at(-1)||txt;if(/^[A-ZΑ-Ω]/u.test(lastPart)){el.classList.add('type-like');return}
       el.classList.add('function-like');
     }
     function enrichSemanticHtml(html,item){
-      const host=document.createElement('div');
-      host.innerHTML=html;
+      const host=document.createElement('div');host.innerHTML=html;
       const defined=(item.defines||[]).flatMap(x=>[x,x.split('.').at(-1)]);
-
       host.querySelectorAll('.lean-token.const,[data-semantic="constructor"]').forEach(el=>classifyConst(el,defined));
       host.querySelectorAll('[data-semantic="module"]').forEach(el=>el.classList.add('module-like'));
       host.querySelectorAll('[data-semantic="variable"]').forEach(el=>el.classList.add('var'));
@@ -144,76 +112,75 @@
       return host.innerHTML;
     }
     function trimRendered(item){
-      let text=item.text||'';
-      let html=item.html||'';
-      const leading=(text.match(/^(?:[ \t]*\n)+/)||[''])[0];
-      const trailing=(text.match(/(?:\n[ \t]*)+$/)||[''])[0];
+      let text=item.text||'',html=item.html||'';
+      const leading=(text.match(/^(?:[ \t]*\n)+/)||[''])[0];const trailing=(text.match(/(?:\n[ \t]*)+$/)||[''])[0];
       if(leading){text=text.slice(leading.length);html=html.replace(/^((?:\s|&nbsp;|<[^>]+>)*)/,'')}
       if(trailing)text=text.slice(0,-trailing.length);
       return{...item,text,html};
     }
-    function renderSemantic(item){
-      const x=trimRendered(item);
-      displayedCode=x.text;
-      copyBtn.disabled=false;
-      const lines=x.text.split('\n');
-      while(lines.length>1&&lines.at(-1)==='')lines.pop();
-      const first=x.startLine||1;
-      const nums=lines.map((_,i)=>first+i).join('\n');
-      const semanticHtml=enrichSemanticHtml(x.html,x);
-      codeWrap.innerHTML=`<div class="code-grid"><pre class="line-nos">${nums}</pre><pre class="code-pre">${semanticHtml}</pre></div>`;
+    function renderHtmlLines(htmlLines,text,firstLine){
+      displayedCode=text;copyBtn.disabled=false;
+      const nums=htmlLines.map((_,i)=>firstLine+i).join('\n');
+      codeWrap.innerHTML=`<div class="code-grid"><pre class="line-nos">${nums}</pre><pre class="code-pre">${htmlLines.join('\n')}</pre></div>`;
     }
-
+    function renderSemantic(item){
+      const x=trimRendered(item);const lines=x.text.split('\n');while(lines.length>1&&lines.at(-1)==='')lines.pop();
+      renderHtmlLines(enrichSemanticHtml(x.html,x).split('\n').slice(0,lines.length),lines.join('\n'),x.startLine||1);
+    }
     function highlightFallback(line){
       let h=escapeHtml(line),i=h.indexOf('--'),c=i>=0?h.slice(0,i):h,cm=i>=0?h.slice(i):'';
       c=c.replace(/\b(theorem|lemma|example|def|abbrev|structure|class|instance|namespace|section|end|variable|variables|universe|open|export|noncomputable|private|protected|mutual|where|deriving|inductive|omit|include)\b/g,'<span class="lean-token keyword">$1</span>');
       c=c.replace(/\b(import|by|simp|simpa|rw|rfl|exact|apply|intro|intros|constructor|cases|induction|have|show|calc|refine|rcases|aesop|omega|linarith|norm_num|ring|field_simp|positivity|decide)\b/g,'<span class="lean-token keyword">$1</span>');
-      if(cm)c+=`<span class="lean-token comment">${cm}</span>`;
-      return c;
+      if(cm)c+=`<span class="lean-token comment">${cm}</span>`;return c;
     }
     function extractDeclaration(source,name){
-      const lines=source.split('\n');
-      const declPattern=/^\s*(?:@\[[^\]]*\]\s*)?(?:noncomputable\s+)?(?:theorem|lemma|example|def|abbrev|instance|structure|class|inductive)\s+([^\s(:{]+)/;
+      const lines=source.split('\n');const declPattern=/^\s*(?:@\[[^\]]*\]\s*)?(?:noncomputable\s+)?(?:theorem|lemma|example|def|abbrev|instance|structure|class|inductive)\s+([^\s(:{]+)/;
       const topLevelCommand=/^(?:@\[[^\]]*\]\s*)?(?:(?:noncomputable|private|protected)\s+)?(?:theorem|lemma|example|def|abbrev|instance|structure|class|inductive|namespace|section|end|variable|variables|universe|open|export|include|omit|attribute|set_option|local\s+instance)\b/;
-      let start=-1;
-      for(let i=0;i<lines.length;i++){const m=lines[i].match(declPattern);if(m&&m[1]===name){start=i;break}}
+      let start=-1;for(let i=0;i<lines.length;i++){const m=lines[i].match(declPattern);if(m&&m[1]===name){start=i;break}}
       if(start===-1)throw new Error(`Declaration "${name}" was not found in ${file}.`);
-      let end=lines.length;
-      for(let i=start+1;i<lines.length;i++){if(topLevelCommand.test(lines[i])){end=i;break}}
-      while(end>start&&lines[end-1].trim()==='')end--;
-      return{code:lines.slice(start,end).join('\n'),startLine:start+1};
+      let end=lines.length;for(let i=start+1;i<lines.length;i++){if(topLevelCommand.test(lines[i])){end=i;break}}while(end>start&&lines[end-1].trim()==='')end--;
+      return{code:lines.slice(start,end).join('\n'),startLine:start+1,endLine:end};
     }
-    function renderFallback(code,firstLine=1){
-      displayedCode=code;
-      copyBtn.disabled=false;
-      const rows=code.split('\n').map((line,index)=>`<tr><td>${firstLine+index}</td><td>${highlightFallback(line)||'&nbsp;'}</td></tr>`).join('');
-      codeWrap.innerHTML=`<table style="border-collapse:collapse;width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.35"><tbody>${rows}</tbody></table>`;
-      [...codeWrap.querySelectorAll('td:nth-child(1)')].forEach(td=>{td.style.cssText='user-select:none;width:1%;min-width:42px;padding:3px 10px;text-align:right;color:var(--muted);border-right:1px solid var(--border);vertical-align:top'});
-      [...codeWrap.querySelectorAll('td:nth-child(2)')].forEach(td=>{td.style.cssText='padding:3px 14px;white-space:pre;vertical-align:top'});
+    function extractScope(source,kind,name){
+      const lines=source.split('\n');const target=new RegExp(`^\\s*${kind}\\s+${escapeRegExp(name)}(?:\\s|$)`);
+      let start=-1;for(let i=0;i<lines.length;i++){if(target.test(lines[i])){start=i;break}}
+      if(start===-1)throw new Error(`${kind} "${name}" was not found in ${file}.`);
+      let depth=1,end=-1;
+      for(let i=start+1;i<lines.length;i++){
+        if(/^\s*(?:namespace|section)\b/.test(lines[i]))depth++;
+        if(/^\s*end(?:\s+[^\s]+)?\s*(?:--.*)?$/.test(lines[i])){depth--;if(depth===0){end=i;break}}
+      }
+      if(end===-1)throw new Error(`Matching end for ${kind} "${name}" was not found.`);
+      return{code:lines.slice(start,end+1).join('\n'),startLine:start+1,endLine:end+1};
     }
-    async function loadFallback(){
-      const u=`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${file}?t=${Date.now()}`;
-      const r=await fetch(u,{cache:'no-store'});
-      if(!r.ok)throw new Error(`HTTP ${r.status}: ${r.statusText}`);
-      const source=await r.text();
-      const x=extractDeclaration(source,decl);
-      renderFallback(x.code,x.startLine);
+    function renderFallbackBlock(block){const lines=block.code.split('\n');renderHtmlLines(lines.map(highlightFallback),block.code,block.startLine)}
+    function renderSemanticBlock(block,data){
+      const sourceLines=block.code.split('\n');const htmlLines=sourceLines.map(highlightFallback);
+      for(const item of (data.items||[])){
+        const x=trimRendered(item);if(!x.text||!x.startLine)continue;
+        const start=x.startLine-block.startLine;if(start<0||start>=htmlLines.length)continue;
+        const sem=enrichSemanticHtml(x.html,x).split('\n');const txt=x.text.split('\n');
+        for(let j=0;j<Math.min(sem.length,txt.length);j++){const idx=start+j;if(idx>=0&&idx<htmlLines.length)htmlLines[idx]=sem[j]}
+      }
+      renderHtmlLines(htmlLines,block.code,block.startLine);
     }
+    async function fetchSource(){const u=`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${file}?t=${Date.now()}`;const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(`HTTP ${r.status}: ${r.statusText}`);return r.text()}
+    async function fetchSemantic(){const moduleName=moduleNameFromFile(file);const r=await fetch(`../notion-data/${moduleName}.json?t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error(`Semantic data HTTP ${r.status}`);return r.json()}
     async function loadCode(){
-      if(!decl){showEmptyState();return}
-      codeWrap.innerHTML='<div class="error">Loading semantic Lean highlighting…</div>';
+      if(targets.length===0){showEmptyState();return}
+      if(targets.length>1){showEmptyState('表示対象は1つだけ指定してください。');return}
+      codeWrap.innerHTML='<div class="error">Loading Lean highlighting…</div>';
       try{
-        const moduleName=moduleNameFromFile(file);
-        const u=`../notion-data/${moduleName}.json?t=${Date.now()}`;
-        const r=await fetch(u,{cache:'no-store'});
-        if(!r.ok)throw new Error(`Semantic data HTTP ${r.status}`);
-        const data=await r.json();
-        const item=data.items.find(it=>(it.defines||[]).some(name=>declarationMatches(name,decl)));
-        if(!item)throw new Error(`Semantic declaration "${decl}" was not found.`);
-        renderSemantic(item);
+        if(targetType==='decl'){
+          const data=await fetchSemantic();const item=data.items.find(it=>(it.defines||[]).some(name=>declarationMatches(name,targetName)));
+          if(!item)throw new Error(`Semantic declaration "${targetName}" was not found.`);renderSemantic(item);return;
+        }
+        const source=await fetchSource();const block=extractScope(source,targetType,targetName);
+        try{const data=await fetchSemantic();renderSemanticBlock(block,data)}catch(e){console.warn('Semantic highlighting unavailable for scope; using fallback.',e);renderFallbackBlock(block)}
       }catch(e){
-        console.warn('Semantic highlighting unavailable; using fallback.',e);
-        try{await loadFallback()}catch(e2){codeWrap.innerHTML=`<div class="error">${escapeHtml(String(e2))}</div>`}
+        console.warn('Primary rendering failed; using source fallback.',e);
+        try{const source=await fetchSource();const block=targetType==='decl'?extractDeclaration(source,targetName):extractScope(source,targetType,targetName);renderFallbackBlock(block)}
+        catch(e2){codeWrap.innerHTML=`<div class="error">${escapeHtml(String(e2))}</div>`}
       }
     }
     reloadBtn.addEventListener('click',loadCode);
