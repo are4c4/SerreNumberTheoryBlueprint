@@ -13,6 +13,21 @@ mkdir -p _out/site/html-multi/notion/link
 mkdir -p _out/site/html-multi/notion-data
 cp notion-viewer/index.html _out/site/html-multi/notion/index.html
 
+# A declaration normally ends at the next top-level Lean command.  A doc/block
+# comment that documents the *next* declaration is not itself a Lean command,
+# so the viewer used to absorb that trailing comment into the previous def/theorem.
+# Treat a top-level block comment after a blank line as a declaration boundary.
+python3 - <<'PY'
+from pathlib import Path
+p = Path('_out/site/html-multi/notion/index.html')
+s = p.read_text()
+old = "for(let i=start+1;i<lines.length;i++){if(top.test(lines[i])){end=i;break}}"
+new = "for(let i=start+1;i<lines.length;i++){if(top.test(lines[i])||(/^\\/-/.test(lines[i])&&i>start+1&&lines[i-1].trim()==='')){end=i;break}}"
+if old not in s:
+    raise SystemExit('declaration boundary patch target was not found')
+p.write_text(s.replace(old, new))
+PY
+
 # Generate the GitHub -> Notion viewer URL helper directly during the Pages build.
 # Keeping it here avoids a hard dependency on a separate source file.
 cat > _out/site/html-multi/notion/link/index.html <<'HTML'
