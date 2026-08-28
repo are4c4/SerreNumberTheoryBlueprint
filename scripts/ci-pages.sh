@@ -13,6 +13,24 @@ mkdir -p _out/site/html-multi/notion/link
 mkdir -p _out/site/html-multi/notion-data
 cp notion-viewer/index.html _out/site/html-multi/notion/index.html
 
+# A doc comment for the next declaration may be followed by one or more attribute
+# lines such as `@[simp]` before the actual theorem/def. Treat that whole sequence
+# as the beginning of the next declaration so the previous declaration does not
+# absorb the following comment.
+python3 - <<'PY'
+from pathlib import Path
+p = Path('_out/site/html-multi/notion/index.html')
+s = p.read_text()
+old = "function nextMeaningful(lines,i){while(i<lines.length&&lines[i].trim()==='')i++;return i}"
+new = "function nextMeaningful(lines,i){while(i<lines.length&&lines[i].trim()==='')i++;return i}function beginsTopCommand(lines,i){i=nextMeaningful(lines,i);while(i<lines.length&&/^\\s*@\\[.*\\]\\s*$/.test(lines[i]))i=nextMeaningful(lines,i+1);return i<lines.length&&topCommand.test(lines[i])}"
+if old not in s:
+    raise SystemExit('nextMeaningful patch target was not found')
+s = s.replace(old, new)
+s = s.replace("if(after<lines.length&&topCommand.test(lines[after])){end=i;break}", "if(beginsTopCommand(lines,after)){end=i;break}")
+s = s.replace("if(k<lines.length&&topCommand.test(lines[k])){end=i;break}", "if(beginsTopCommand(lines,k)){end=i;break}")
+p.write_text(s)
+PY
+
 # The viewer polls this file. When a new Pages deployment changes the commit,
 # an existing Notion embed reloads itself automatically.
 printf '{"commit":"%s"}\n' "${GITHUB_SHA:-local}" > _out/site/html-multi/build-version.json
