@@ -8,8 +8,8 @@ open Lean.Elab.Command
 private def isProjectTheorem (n : Name) : Bool :=
   (toString n).startsWith "SerreNumberTheory."
 
-private def statusEntry (n : Name) (axioms : NameSet) : Json :=
-  let incomplete := axioms.contains ``sorryAx
+private def statusEntry (n : Name) (axioms : Array Name) : Json :=
+  let incomplete := axioms.any (fun a => a == ``sorryAx)
   Json.mkObj [
     ("name", toJson (toString n)),
     ("shortName", toJson (toString n.getString!)),
