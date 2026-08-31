@@ -105,6 +105,11 @@ jobs:
         run: python3 tools/verso-harness/scripts/check_harness.py --project-root .
       - name: Build Blueprint site
         run: ./scripts/ci-pages.sh
+      - name: Export theorem proof status
+        run: |
+          lake env lean ProofStatusExport.lean
+          python3 scripts/add-proof-status-ui.py
+          test -f _out/site/html-multi/proof-status.json
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
