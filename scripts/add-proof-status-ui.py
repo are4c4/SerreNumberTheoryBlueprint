@@ -3,6 +3,15 @@ from pathlib import Path
 p = Path("_out/site/html-multi/notion/index.html")
 s = p.read_text()
 
+# After this feature branch is merged, deployed Notion viewers should read Lean
+# source from main by default. Explicit ?branch=... URLs still override this.
+old_branch = "const branch=params.get('branch')||'notion-display-from-before-miniblueprint-2026-08-26';"
+new_branch = "const branch=params.get('branch')||'main';"
+if old_branch in s:
+    s = s.replace(old_branch, new_branch, 1)
+elif new_branch not in s:
+    raise SystemExit("default Notion source branch anchor was not found")
+
 css = """
 .proof-status{display:inline-flex;align-items:center;font:600 10px ui-monospace,SFMono-Regular,Menlo,monospace;border:1px solid #454545;border-radius:999px;padding:2px 7px;margin-left:4px}.proof-status.proved{color:#89d185;border-color:#2f6f44;background:#183322}.proof-status.incomplete{color:#f48771;border-color:#8a4038;background:#3a2020}.proof-status.unknown{color:#cca700;border-color:#7a6514;background:#332d13}
 """
