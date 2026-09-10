@@ -204,13 +204,34 @@ local instance : Algebra (ZMod p) K :=
   ZMod.algebra K p
 
 /--
-標数 `p` の有限体 `K` の位数は，
-`ZMod p` 上の次元を指数とする `p` の冪である．
+標数`p`の有限体`K`の位数は，
+`ZMod p`上の次元を指数とする`p`の冪である．
 -/
 theorem finiteField_card_eq_pow_finrank :
     Fintype.card K =
       p ^ Module.finrank (ZMod p) K := by
-  exact (FiniteField.pow_finrank_eq_card p K).symm
+  calc
+    Fintype.card K
+        =
+        Fintype.card (ZMod p) ^
+          Module.finrank (ZMod p) K := by
+      exact Module.card_eq_pow_finrank
+
+    _ = p ^ Module.finrank (ZMod p) K := by
+      rw [ZMod.card]
+
+/--
+`K`が`ZMod p`上`f`次元ならば，
+`K`の位数は`p ^ f`である．
+-/
+theorem finiteField_card_eq_pow
+    (f : ℕ)
+    (hfinrank : Module.finrank (ZMod p) K = f) :
+    Fintype.card K = p ^ f := by
+  rw [
+    finiteField_card_eq_pow_finrank K p,
+    hfinrank
+  ]
 
 end FiniteFieldCardinality
 
@@ -325,8 +346,13 @@ local instance : Algebra (ZMod p) K :=
 -/
 noncomputable def finiteFieldAlgEquivGaloisField
     (hcard : Fintype.card K = p ^ f) :
-    K ≃ₐ[ZMod p] GaloisField p f :=
-  GaloisField.algEquivGaloisFieldOfFintype p f hcard
+    K ≃ₐ[ZMod p] GaloisField p f := by
+  haveI :=
+    FiniteField.isSplittingField_of_card_eq
+      p f hcard
+
+  exact
+    Polynomial.IsSplittingField.algEquiv _ _
 
 /--
 位数が`p ^ f`である有限体`K`は，
@@ -454,20 +480,11 @@ theorem frobeniusPolynomial_separable
     (hf : f ≠ 0) :
     (Polynomial.X ^ (p ^ f) - Polynomial.X :
       Polynomial Ω).Separable := by
-  have hp_dvd : p ∣ p ^ f := by
-    exact dvd_pow_self p hf
-
-  have hsep :=
-    Polynomial.separable_C_mul_X_pow_add_C_mul_X_add_C'
+  exact
+    galois_poly_separable
       p
       (p ^ f)
-      (1 : Ω)
-      (-1 : Ω)
-      (0 : Ω)
-      hp_dvd
-      isUnit_neg_one
-
-  simpa [sub_eq_add_neg] using hsep
+      (dvd_pow_self p hf)
 
 omit [CharP Ω p] in
 /--
@@ -525,7 +542,6 @@ theorem frobeniusPolynomial_rootSet_card
 `X ^ (p ^ f) - X`の根集合と一致する．
 -/
 theorem frobeniusFixedSubfield_carrier_eq_rootSet
-    [IsAlgClosed Ω]
     (hf : f ≠ 0) :
     (frobeniusFixedSubfield Ω p f : Set Ω)
       =
@@ -534,25 +550,9 @@ theorem frobeniusFixedSubfield_carrier_eq_rootSet
   let P : Polynomial Ω :=
     Polynomial.X ^ (p ^ f) - Polynomial.X
 
-  have hP_degree :
-      P.natDegree = p ^ f := by
-    exact frobeniusPolynomial_natDegree Ω p f hf
-
-  have hp_one_lt : 1 < p :=
-    (Fact.out : Nat.Prime p).one_lt
-
-  have hpow_one_lt : 1 < p ^ f := by
-    exact Nat.one_lt_pow hf hp_one_lt
-
   have hP_ne : P ≠ 0 := by
-    intro hP
-    rw [hP] at hP_degree
-    simp at hP_degree
-
-    have hpow_ne : p ^ f ≠ 0 :=
-      ne_of_gt (lt_trans Nat.zero_lt_one hpow_one_lt)
-
-    exact hpow_ne hP_degree.symm
+    simpa [P] using
+      (frobeniusPolynomial_separable Ω p f hf).ne_zero
 
   ext x
 
@@ -560,29 +560,10 @@ theorem frobeniusFixedSubfield_carrier_eq_rootSet
     (x ∈ frobeniusFixedSubfield Ω p f) ↔
       x ∈ P.rootSet Ω
 
-  constructor
-  · intro hx
+  rw [Polynomial.mem_rootSet_of_ne hP_ne]
 
-    have hroot : Polynomial.IsRoot P x := by
-      simpa [P] using
-        (mem_frobeniusFixedSubfield_iff_isRoot Ω p f x).mp hx
-
-    rw [Polynomial.mem_rootSet]
-
-    constructor
-    · exact hP_ne
-    · simpa [Polynomial.IsRoot] using hroot
-
-  · intro hx
-
-    have hx' :
-        P ≠ 0 ∧ Polynomial.aeval x P = 0 := by
-      exact Polynomial.mem_rootSet.mp hx
-
-    apply
-      (mem_frobeniusFixedSubfield_iff_isRoot Ω p f x).mpr
-
-    simpa [P, Polynomial.IsRoot] using hx'.2
+  simpa [P, Polynomial.IsRoot] using
+    (mem_frobeniusFixedSubfield_iff_isRoot Ω p f x)
 
 /--
 代数閉体`Ω`の部分体`frobeniusFixedSubfield Ω p f`は，
@@ -651,65 +632,32 @@ theorem subfield_eq_frobeniusFixedSubfield
     (hf : f ≠ 0)
     (hcard : Fintype.card L = p ^ f) :
     L = frobeniusFixedSubfield Ω p f := by
-  let P : Polynomial Ω :=
-    Polynomial.X ^ (p ^ f) - Polynomial.X
-
-  let e :
-      frobeniusFixedSubfield Ω p f
-        ≃
-      ↑(P.rootSet Ω) := by
-    exact Equiv.setCongr
-      (frobeniusFixedSubfield_carrier_eq_rootSet Ω p f hf)
-
-  letI : Fintype (frobeniusFixedSubfield Ω p f) :=
-    Fintype.ofEquiv
-      ↑(P.rootSet Ω)
-      e.symm
-
   apply SetLike.coe_injective
-  apply Set.eq_of_subset_of_card_le
 
-  · exact subfield_le_frobeniusFixedSubfield Ω p f L hcard
+  apply Set.Finite.eq_of_subset_of_card_le
 
-  · let eFixed :
-        ↥((frobeniusFixedSubfield Ω p f : Subfield Ω) : Set Ω)
-          ≃
-        frobeniusFixedSubfield Ω p f :=
-      Equiv.refl _
+  · rw [
+      frobeniusFixedSubfield_carrier_eq_rootSet
+        Ω p f hf
+    ]
 
-    let eL :
-        ↥((L : Subfield Ω) : Set Ω) ≃ L :=
-      Equiv.refl _
+    exact
+      (Polynomial.X ^ (p ^ f) - Polynomial.X :
+        Polynomial Ω).rootSet_finite Ω
 
-    have hfixed :
-        Fintype.card
-            ↥((frobeniusFixedSubfield Ω p f :
-                Subfield Ω) : Set Ω)
-          =
-        p ^ f := by
-      calc
-        Fintype.card
-            ↥((frobeniusFixedSubfield Ω p f :
-                Subfield Ω) : Set Ω)
-            =
-            Fintype.card
-              (frobeniusFixedSubfield Ω p f) := by
-              exact Fintype.card_congr eFixed
-        _ = p ^ f := by
-              rw [← Nat.card_eq_fintype_card]
-              exact frobeniusFixedSubfield_natCard Ω p f hf
+  · exact
+      subfield_le_frobeniusFixedSubfield
+        Ω p f L hcard
 
-    have hL :
-        Fintype.card ↥((L : Subfield Ω) : Set Ω)
-          =
-        p ^ f := by
-      calc
-        Fintype.card ↥((L : Subfield Ω) : Set Ω)
-            = Fintype.card L := by
-                exact Fintype.card_congr eL
-        _ = p ^ f := hcard
+  · change
+      Nat.card (frobeniusFixedSubfield Ω p f) ≤
+        Nat.card L
 
-    rw [hfixed, hL]
+    rw [
+      frobeniusFixedSubfield_natCard Ω p f hf,
+      Nat.card_eq_fintype_card,
+      hcard
+    ]
 
 /--
 代数閉体`Ω`の中には，`p ^ f`個の元を持つ部分体が一意に存在する．
