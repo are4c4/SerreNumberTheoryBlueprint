@@ -2,3 +2,6 @@
 .build/
 _out/
 .DS_Store
+.env
+.env.local
+.env.*.local
