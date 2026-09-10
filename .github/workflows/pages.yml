@@ -16,4 +16,6 @@ jobs:
   pages:
     # Reusable workflow builds and deploys the Blueprint site.
     uses: ./.github/workflows/blueprint-pages.yml
+    with:
+      warm_dependency_cache: true
     secrets: inherit
