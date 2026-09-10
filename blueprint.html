@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="ja"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Serre Number Theory Blueprint</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+<script src="https://unpkg.com/highlightjs-lean/dist/lean.min.js"></script>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#1f2937;background:#f4f6f8}*{box-sizing:border-box}body{margin:0}.app{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;overflow:auto;padding:24px 16px;background:#fff;border-right:1px solid #e5e7eb}.brand{font-size:1.05rem;font-weight:800;margin:0 8px 20px}.toc-heading,.toc-entry{display:block;text-decoration:none;color:#334155;border-radius:7px}.toc-heading:hover,.toc-entry:hover{background:#f1f5f9}.toc-level-2{font-size:.88rem;font-weight:800;padding:9px}.toc-level-3{font-size:.8rem;font-weight:700;padding:8px 10px 5px 18px}.toc-entry{font-size:.76rem;padding:6px 10px 6px 30px}.toc-entry span{display:block;font:600 .58rem ui-monospace,SFMono-Regular,Menlo,monospace;color:#94a3b8;text-transform:uppercase}
+main{max-width:1500px;width:100%;margin:0 auto;padding:34px 28px 80px}.doc-heading{scroll-margin-top:18px}.doc-heading-2{font-size:1.8rem;margin:8px 0 16px}.doc-heading-3{font-size:1.3rem;margin:42px 0 12px;padding-bottom:8px;border-bottom:1px solid #dbe2ea}.prose{max-width:900px;font-size:1.02rem;line-height:2;margin:0 0 24px;color:#334155}
+.entry{background:#fff;border:1px solid #dfe3e8;border-radius:14px;margin:28px 0;overflow:hidden;box-shadow:0 2px 8px rgba(15,23,42,.04);scroll-margin-top:16px}.entry:target{box-shadow:0 0 0 3px rgba(148,163,184,.22)}.entry-header{display:flex;justify-content:space-between;gap:16px;padding:20px 26px;border-bottom:1px solid #e5e7eb}.entry-header h2{margin:4px 0 0;font-size:1.25rem}.eyebrow{font-size:.8rem;color:#667085}.status{height:max-content;border-radius:999px;padding:5px 10px;font-size:.78rem;font-weight:700}.formalized{background:#dcfce7;color:#166534}.in-progress{background:#fef3c7;color:#92400e}.planned{background:#e5e7eb;color:#475569}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)}.split section{min-width:0;padding:26px}.natural-language{border-right:1px solid #e5e7eb}.book-label{font:700 .75rem ui-monospace,SFMono-Regular,Menlo,monospace;text-transform:uppercase;letter-spacing:.08em;color:#475569}.main-label{margin-bottom:14px}.math-text{line-height:1.9;white-space:pre-wrap}.book-block{margin-top:24px;padding:16px 18px;border-left:4px solid #cbd5e1;background:#f8fafc;border-radius:0 8px 8px 0}.remark-block{border-left-color:#a5b4fc;background:#f8f9ff}
+.notion-linked-entry{margin-top:14px}.notion-linked-meta{background:#fbfcfd}.correspondence-note{margin:0 0 18px;color:#64748b;font-size:.82rem;line-height:1.7}.notion-card-link{color:#2563eb;text-decoration:none}.notion-card-link:hover{text-decoration:underline}
+dl{display:grid;grid-template-columns:130px 1fr;gap:10px 12px;margin:24px 0 0;font-size:.85rem}dt{color:#667085}dd{margin:0;overflow-wrap:anywhere}.dependencies{display:flex;flex-wrap:wrap;gap:6px}.dependency-chip{padding:3px 8px;border-radius:999px;background:#eef2ff;color:#4338ca;text-decoration:none;font:12px ui-monospace,SFMono-Regular,Menlo,monospace}.declaration-button,.lean-ref{border:0;padding:0;background:transparent;color:#2563eb;cursor:pointer;font:inherit;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.lean-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.lean-heading h3{margin:0 0 14px;font-size:.9rem;color:#475569;text-transform:uppercase}.lean-name{color:#64748b;font:11px ui-monospace,SFMono-Regular,Menlo,monospace}.lean-pre{margin:0;overflow:auto;border-radius:10px;background:#0d1117}.lean-source{display:block;padding:14px 0;font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:#c9d1d9}.code-row{display:grid;grid-template-columns:54px minmax(max-content,1fr)}.line-no{padding:0 12px 0 8px;text-align:right;color:#6e7681;user-select:none;border-right:1px solid #30363d}.line-body{padding:0 16px;white-space:pre}.proof-code{font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}.no-code{padding:16px;border-radius:8px;background:#f8fafc;color:#64748b;font-size:.85rem}
+.source-location{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;margin-top:12px;padding:9px 11px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;font-size:.72rem}.source-location span{color:#64748b;font-weight:700;text-transform:uppercase}.source-location a,.source-location code{font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;overflow-wrap:anywhere}.source-location a{color:#2563eb;text-decoration:none}.lean-hint{margin-top:9px;font-size:.72rem;color:#94a3b8}
+.proof-steps{border-top:1px solid #e5e7eb;background:#fbfcfd}.proof-steps summary{cursor:pointer;padding:18px 26px;font-weight:750}.proof-steps summary span{font-weight:400;color:#64748b;font-size:.82rem;margin-left:8px}.steps-body{padding:0 26px 22px}.step-row{display:grid;grid-template-columns:1fr 1.15fr;border:1px solid #e5e7eb;border-bottom:0}.step-row:last-child{border-bottom:1px solid #e5e7eb}.step-natural,.step-lean{padding:14px;min-width:0}.step-natural{display:flex;gap:10px;border-right:1px solid #e5e7eb}.step-number{display:grid;place-items:center;flex:0 0 24px;height:24px;border-radius:50%;background:#e2e8f0;font-size:.72rem;font-weight:700}
+dialog{width:min(680px,calc(100vw - 32px));border:0;border-radius:14px;padding:0;box-shadow:0 24px 80px rgba(15,23,42,.28)}dialog::backdrop{background:rgba(15,23,42,.45)}.dialog-inner{padding:22px}.dialog-top{display:flex;justify-content:space-between;gap:16px}.dialog-top h3{margin:0}.dialog-type{margin-top:14px;padding:10px 12px;border-radius:8px;background:#f1f5f9;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap}.dialog-meta{margin-top:10px;font-size:.8rem;color:#64748b}.dialog-body{margin-top:16px;line-height:1.8;white-space:pre-wrap}.dialog-close{border:1px solid #d1d5db;background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer}
+@media(max-width:1050px){.app{grid-template-columns:1fr}.sidebar{position:static;height:auto}.split,.step-row{grid-template-columns:1fr}.natural-language,.step-natural{border-right:0;border-bottom:1px solid #e5e7eb}}
+</style></head><body>
+<div class="app"><aside class="sidebar"><div class="brand">Serre Blueprint</div><nav>
+<a class="toc-heading toc-level-2" href="#section-1-1-1">1.1.1 有限体</a>
+<a class="toc-entry" href="#notion-3b9db819-351e-80a2-a54c-f8f5b7d10a59"><span>Theorem</span>1.1.1_Cor01</a>
+<a class="toc-heading toc-level-3" href="#topic-characteristic">標数</a>
+<a class="toc-entry" href="#field_characteristic"><span>Definition</span>体の標数</a>
+<a class="toc-entry" href="#field_char_is_prime_or_zero"><span>Theorem</span>体の標数は素数または0</a>
+<a class="toc-heading toc-level-3" href="#topic-frobenius">Frobenius写像</a>
+<a class="toc-entry" href="#frobenius_map"><span>Definition</span>Frobenius写像</a>
+<a class="toc-entry" href="#frobenius_zero"><span>Theorem</span>Frobenius写像は0を保つ</a>
+<a class="toc-entry" href="#frobenius_one"><span>Theorem</span>Frobenius写像は1を保つ</a>
+<a class="toc-entry" href="#frobenius_mul"><span>Theorem</span>Frobenius写像は積を保つ</a>
+<a class="toc-entry" href="#frobenius_add"><span>Theorem</span>Frobenius写像は和を保つ</a>
+<a class="toc-entry" href="#frobenius_ring_hom"><span>Definition</span>Frobenius写像は環準同型</a>
+<a class="toc-entry" href="#frobenius_injective"><span>Theorem</span>Frobenius写像は単射</a>
+</nav></aside><main>
+<h2 class="doc-heading doc-heading-2" id="section-1-1-1">1.1.1 有限体</h2>
+<style>
+.notion-import,.notion-linked-entry{max-width:900px;font-size:1.02rem;line-height:1.95;color:#334155}
+.notion-import{margin:0 0 34px}.notion-linked-entry{margin:34px 0 12px;padding:22px 24px;border:1px solid #dbe2ea;border-radius:12px;background:#fff}
+.notion-import p,.notion-linked-entry p{margin:0 0 18px}.notion-equation{margin:14px 0 22px;text-align:center}
+.notion-source-bar,.notion-linked-header{display:flex;align-items:center;gap:10px;margin:0 0 24px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:.78rem}
+.notion-linked-header{margin:-4px 0 20px;background:#f8fafc}.notion-linked-header span,.notion-source-bar span{font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.05em}
+.notion-source-bar a,.notion-linked-header a,.notion-mention{color:#2563eb;text-decoration:none}.notion-source-bar a:hover,.notion-linked-header a:hover,.notion-mention:hover{text-decoration:underline}
+.notion-toggle{margin:14px 0 22px;border:1px solid #e2e8f0;border-radius:9px;background:#fff;overflow:hidden}.notion-toggle summary{cursor:pointer;padding:13px 16px;font-weight:700;color:#334155}.notion-toggle[open]>summary{border-bottom:1px solid #e2e8f0;background:#f8fafc}.notion-toggle-body{padding:16px 18px}.notion-toggle.nested{margin:12px 0;background:#fbfcfd}
+.notion-callout{margin:14px 0;padding:14px 16px;border:1px solid #e2e8f0;border-radius:9px;background:#f8fafc}.notion-list-item{margin:6px 0 6px 18px}.notion-linked-entry + .entry{margin-top:12px;max-width:1120px}
+</style>
+<section class="notion-import" data-notion-page="3b9db819351e80808a8bca912f2510a5">
+  <div class="notion-source-bar">
+    <span>Notion · auto synced</span>
+    <a href="https://curved-turner-4ce.notion.site/1-1-1_-3b9db819351e80808a8bca912f2510a5" target="_blank" rel="noopener noreferrer">1.1.1_有限体 ↗</a>
+  </div>
+<p>\(K\) を<a class="notion-mention" href="https://www.notion.so/3b9db819351e80818f75c82a83cdb601" target="_blank" rel="noopener noreferrer">体</a> とする．</p>
+<p><a class="notion-mention" href="https://www.notion.so/3b9db819351e803ea61ae4be7cf21a18" target="_blank" rel="noopener noreferrer">環準同型</a>  \(f : \mathbb{Z} \to K\) を \(f(1_\mathbb{Z}) = 1_K\) となるように定義する．</p>
+<p>このとき，\(f\) は次のような<a class="notion-mention" href="https://www.notion.so/3b9db819351e80bb9553f76493c34b82" target="_blank" rel="noopener noreferrer">写像</a> になる：</p>
+<div class="notion-equation">\[f(n) = n \cdot 1_K\]</div>
+<div class="notion-callout"> <details class="notion-toggle"><summary>【 \(f(n) = n \cdot 1_K\)　となることの証明】</summary><div class="notion-toggle-body"><p>\(f\) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e803ea61ae4be7cf21a18" target="_blank" rel="noopener noreferrer">環準同型</a> で，\(f(1_\mathbb{Z}) = 1_K\) だから，</p>
+<div class="notion-equation">\[\begin{align*}
+f(n) 
+&amp;= f(n \cdot 1_\mathbb{Z}) \\
+&amp;= f(1_\mathbb{Z} + 1_\mathbb{Z} + ... + 1_\mathbb{Z}) \\
+&amp;= n \cdot f(1_\mathbb{Z}) \\
+&amp;= n \cdot 1_K
+\end{align*}\]</div>
+<p>※ 最後の \(n \cdot 1_K\) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e80818f75c82a83cdb601" target="_blank" rel="noopener noreferrer">体</a> \(K\) 上での \(n\) 倍という意味．これは \(n \in K\) で，\(n\) と \(1_K\) の積という意味ではなく，\(1_K\) を \(n\) 回足し合わせるという意味なので注意．</p></div></details></div>
+<p>\(f(\mathbb{Z})\) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e801584c8c584148089c3" target="_blank" rel="noopener noreferrer">整域</a> だから，\(\mathbb{Z}\) または \(\mathbb{Z} / p \mathbb{Z}\) （ \(p\) は<a class="notion-mention" href="https://www.notion.so/3c2db819351e80fdad9be08b41fc5762" target="_blank" rel="noopener noreferrer">素数</a>  ）と<a class="notion-mention" href="https://www.notion.so/3b9db819351e80fbb144e56c75b8a5ef" target="_blank" rel="noopener noreferrer">環同型</a> であり，\(f(\mathbb{Z})\) の<a class="notion-mention" href="https://www.notion.so/3b9db819351e80ff9f16c1af8ea8a03d" target="_blank" rel="noopener noreferrer">商体（分数体）</a> \(\operatorname{Frac} \{ f(\mathbb{Z}) \}\) は \(\mathbb{Q}\) または \(\mathbb{Z} / p \mathbb{Z}\) （ \(p\) は<a class="notion-mention" href="https://www.notion.so/3c2db819351e80fdad9be08b41fc5762" target="_blank" rel="noopener noreferrer">素数</a>  ）と<a class="notion-mention" href="https://www.notion.so/3b9db819351e80fbb144e56c75b8a5ef" target="_blank" rel="noopener noreferrer">環同型</a> である．</p>
+<div class="notion-callout"> <details class="notion-toggle"><summary>【 \(f(\mathbb{Z})\) が<a class="notion-mention" href="https://www.notion.so/3b9db819351e801584c8c584148089c3" target="_blank" rel="noopener noreferrer">整域</a> となることの証明】</summary><div class="notion-toggle-body"><p>\(f\) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e803ea61ae4be7cf21a18" target="_blank" rel="noopener noreferrer">環準同型</a> だから，<a class="notion-mention" href="https://www.notion.so/3c0db819351e803e9c01f76fdc13d045" target="_blank" rel="noopener noreferrer">定理（環準同型 の像は部分環 ）</a> より，\(f(\mathbb{Z})\) は \(K\) の<a class="notion-mention" href="https://www.notion.so/3c0db819351e80a08315e1df395433d6" target="_blank" rel="noopener noreferrer">部分環</a> になる．</p>
+<p>\(f(\mathbb{Z})\) の元は <a class="notion-mention" href="https://www.notion.so/3b9db819351e80818f75c82a83cdb601" target="_blank" rel="noopener noreferrer">体</a> \(K\) の元だから，\(f(\mathbb{Z})\) は<a class="notion-mention" href="https://www.notion.so/3badb819351e8068afaacee18a3b00f2" target="_blank" rel="noopener noreferrer">零因子</a> を持たない．</p>
+<p>よって， \(f(\mathbb{Z})\) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e801584c8c584148089c3" target="_blank" rel="noopener noreferrer">整域</a> となる．</p></div></details></div>
+<div class="notion-callout"> <details class="notion-toggle"><summary>【 \(f(\mathbb{Z})\) は \(\mathbb{Z}\) または \(\mathbb{Z} / p \mathbb{Z}\) と<a class="notion-mention" href="https://www.notion.so/3b9db819351e80fbb144e56c75b8a5ef" target="_blank" rel="noopener noreferrer">環同型</a> 】</summary><div class="notion-toggle-body"><div class="notion-equation">\[\ker f = \{ n \in \mathbb{Z} \mid f(n) = 0\}\]</div>
+<p>を考える．</p>
+<details class="notion-toggle"><summary>（ \(\ker f = \{ 0_K \}\) のとき ）</summary><div class="notion-toggle-body"><p>このとき，<a class="notion-mention" href="https://www.notion.so/3c0db819351e80788fb4dfcdf041543a" target="_blank" rel="noopener noreferrer">定理（ \(\ker f = {0} \iff\) \(f\) は単射 ）</a> より，<a class="notion-mention" href="https://www.notion.so/3b9db819351e803ea61ae4be7cf21a18" target="_blank" rel="noopener noreferrer">環準同型</a> \(f\) は<a class="notion-mention" href="https://www.notion.so/3c0db819351e80ea9dc9d04768085671" target="_blank" rel="noopener noreferrer">単射</a> ．</p>
+<p>また，\(f : \mathbb{Z} \to f (\mathbb{Z})\) は<a class="notion-mention" href="https://www.notion.so/3c0db819351e8052a8a2d96d7398f376" target="_blank" rel="noopener noreferrer">全射</a> だから，\(f\) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e80fbb144e56c75b8a5ef" target="_blank" rel="noopener noreferrer">環同型</a> ．</p>
+<p>よって，\(\mathbb{Z} \cong f (\mathbb{Z})\) ．</p></div></details>
+<details class="notion-toggle"><summary>（ \(\ker f \neq \{ 0_K \}\) のとき ）</summary><div class="notion-toggle-body"><p>\(\ker f\) には正の整数が存在するので，</p>
+<div class="notion-equation">\[p \coloneqq \min \{ n \geq 1 \mid f(n) = 0_K \}\]</div>
+<p>とおくことができる．</p>
+<details class="notion-toggle"><summary>【 \(\ker f\) に正の整数が存在することの証明 】</summary><div class="notion-toggle-body"><p>仮定より，\(\ker f \neq \{ 0_K \}\) だから，ある \(n \in \mathbb{Z} - \{ 0_\mathbb{Z} \}\) が存在して，\(f(n) = 0\) となる．</p>
+<p>\(n \in \mathbb{Z} - \{ 0_\mathbb{Z} \}\)　だから，\(n &gt; 0\) または \(n &lt; 0\) ．</p>
+<details class="notion-toggle"><summary>（ \(n &gt; 0\) のとき ）</summary><div class="notion-toggle-body"><p>このとき，\(\ker f\) に正の整数 \(n\) が存在する．</p></div></details>
+<details class="notion-toggle"><summary>（ \(n &lt; 0\) のとき ）</summary><div class="notion-toggle-body"><p>このとき，\(f\) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e803ea61ae4be7cf21a18" target="_blank" rel="noopener noreferrer">環準同型</a> だから，</p>
+<div class="notion-equation">\[f(-n) = f(-1_\mathbb{Z})f(n) = 0\]</div>
+<p>となるので，\(-n \in \ker f\) ．</p>
+<p>よって，\(\ker f\) に正の整数 \(-n\) が存在する．</p></div></details></div></details>
+<p><a class="notion-mention" href="https://www.notion.so/3c0db819351e80779aa7fd24e4fff713" target="_blank" rel="noopener noreferrer">環 の準同型定理</a> より，\(\mathbb{Z} / \ker f \cong f(\mathbb{Z})\) ．</p>
+<p>ここで，\(\ker f = p\mathbb{Z}\) だから，\(\mathbb{Z} / p \mathbb{Z} \cong f(\mathbb{Z})\) ．</p>
+<details class="notion-toggle"><summary>【 \(\ker f = p\mathbb{Z}\) となることの証明 】</summary><div class="notion-toggle-body"><p>\(p\mathbb{Z} \subset \ker f\) かつ \(\ker f \subset p\mathbb{Z}\) であることを示す．</p>
+<details class="notion-toggle"><summary>【 \(p\mathbb{Z} \subset \ker f\) 】</summary><div class="notion-toggle-body"><p>\(m \in \mathbb{Z}\) を任意にとる．</p>
+<div class="notion-equation">\[\begin{align*}
+f(mp)
+&amp;= f(m)f(p) \\
+&amp;= f(m) \cdot 0 \\
+&amp;= 0
+\end{align*}\]</div>
+<p>となるので，\(mp \in \ker f\) ．</p>
+<p>\(m\) は任意の整数だから，\(p\mathbb{Z} \subset \ker f\) ．</p></div></details>
+<details class="notion-toggle"><summary>【 \(\ker f \subset p\mathbb{Z}\) 】</summary><div class="notion-toggle-body"><p>\(n \in \ker f\) を任意にとる．</p>
+<p>このとき，</p>
+<div class="notion-equation">\[n = qp + r　(0 \leq r &lt; p)\]</div>
+<p>と表せる．</p>
+<p>\(f\) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e803ea61ae4be7cf21a18" target="_blank" rel="noopener noreferrer">環準同型</a> だから，</p>
+<div class="notion-equation">\[\begin{align*}
+f(n)
+&amp;= f(qp + r) \\
+&amp;= f(q)f(p) + f(r)\\
+&amp;= f(r)
+\end{align*}\]</div>
+<p>ここで，\(f(n) = 0\) だから，\(f(r) = f(n) = 0\) ．</p>
+<p>ゆえに，\(r \in \ker f\) ．</p>
+<p>しかし，\(0 \leq r &lt; p\) であり，\(p \coloneqq \min \{ n \geq 1 \mid f(n) = 0_K \}\) だから，\(r = 0\) ．</p>
+<p>よって，\(n = qp \in p \mathbb{Z}\) ．</p>
+<p>\(n\) は任意の \(\ker f\) の元だから，\(\ker f \subset p\mathbb{Z}\) ．</p></div></details></div></details>
+<p>また，このとき，\(p\) は<a class="notion-mention" href="https://www.notion.so/3c2db819351e80fdad9be08b41fc5762" target="_blank" rel="noopener noreferrer">素数</a> となる．</p>
+<details class="notion-toggle"><summary>【 \(p\) は<a class="notion-mention" href="https://www.notion.so/3c2db819351e80fdad9be08b41fc5762" target="_blank" rel="noopener noreferrer">素数</a> となることの証明 】</summary><div class="notion-toggle-body"><p>\(p \) が<a class="notion-mention" href="https://www.notion.so/3c2db819351e80fdad9be08b41fc5762" target="_blank" rel="noopener noreferrer">素数</a> でないと仮定する．</p>
+<p>このとき，ある2つの整数 \(1 &lt; a &lt; p\) ，\(1 &lt; b &lt; p\) が存在して，\(p = ab\) となる．</p>
+<p>\(f\) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e803ea61ae4be7cf21a18" target="_blank" rel="noopener noreferrer">環準同型</a> だから，</p>
+<div class="notion-equation">\[f(p) = f(ab) = f(a)f(b)\]</div>
+<p>であり，\(f(p) = 0\) だから，\(f(a)f(b) = 0\) ．</p>
+<p>さらに，\(f(\mathbb{Z})\) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e801584c8c584148089c3" target="_blank" rel="noopener noreferrer">整域</a> だから，\(f(a) = 0\) または \(f(b) = 0\) となる．</p>
+<p>しかし，\(a, b &lt; p\) だから， \(p\) の定義より，\(f(a) \neq 0，f(b) \neq 0\) となって矛盾．</p>
+<p>したがって，\(p\) は<a class="notion-mention" href="https://www.notion.so/3c2db819351e80fdad9be08b41fc5762" target="_blank" rel="noopener noreferrer">素数</a> である．</p></div></details></div></details></div></details></div>
+<div class="notion-callout"> <details class="notion-toggle"><summary>【 \(f(\mathbb{Z})\) の<a class="notion-mention" href="https://www.notion.so/3b9db819351e80ff9f16c1af8ea8a03d" target="_blank" rel="noopener noreferrer">商体（分数体）</a> \(\operatorname{Frac} \{ f(\mathbb{Z}) \}\) は \(\mathbb{Q}\) または \(\mathbb{Z} / p \mathbb{Z}\) と<a class="notion-mention" href="https://www.notion.so/3b9db819351e80fbb144e56c75b8a5ef" target="_blank" rel="noopener noreferrer">環同型</a> 】</summary><div class="notion-toggle-body"><div class="notion-callout"> <details class="notion-toggle"><summary>（ \(\mathbb{Z} \cong f (\mathbb{Z})\) のとき ）</summary><div class="notion-toggle-body"><p>このとき，\(f : \mathbb{Z} \to f (\mathbb{Z})\) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e803ea61ae4be7cf21a18" target="_blank" rel="noopener noreferrer">環準同型</a> ．</p>
+<p>特に \(f\) は<a class="notion-mention" href="https://www.notion.so/3c0db819351e80ea9dc9d04768085671" target="_blank" rel="noopener noreferrer">単射</a> だから，<a class="notion-mention" href="https://www.notion.so/3c0db819351e80788fb4dfcdf041543a" target="_blank" rel="noopener noreferrer">定理（ \(\ker f = {0} \iff\) \(f\) は単射 ）</a> より，</p>
+<div class="notion-equation">\[n \neq 0 \implies f(n) \neq 0 \]</div>
+<p>が成り立つ．</p>
+<p>そこで，<a class="notion-mention" href="https://www.notion.so/3b9db819351e80bb9553f76493c34b82" target="_blank" rel="noopener noreferrer">写像</a> \(\Phi : \mathbb{Q} \to \operatorname{Frac} \{ f(\mathbb{Z}) \}\) を</p>
+<div class="notion-equation">\[\Phi \left( \frac{m}{n} \right) 
+\coloneqq
+\frac{f(m)}{f(n)}\]</div>
+<p>と定める．</p>
+<div class="notion-callout"> <details class="notion-toggle"><summary>【 \(\Phi\) が well-defined であること 】</summary><div class="notion-toggle-body"><div class="notion-equation">\[\frac{m}{n} = \frac{m&#x27;}{n&#x27;}
+\implies
+\frac{f(m)}{f(n)} = \frac{f(m&#x27;)}{f(n&#x27;)}\]</div>
+<p>が成り立つことを示す．</p>
+<p>\(\frac{m}{n} = \frac{m&#x27;}{n&#x27;}\) を仮定する．</p>
+<p>両辺に \(nn&#x27;\) をかけると，\(mn&#x27; = m&#x27;n\) ．</p>
+<p>よって，\(f(mn&#x27;) = f(m&#x27;n)\) であり，\(f \) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e803ea61ae4be7cf21a18" target="_blank" rel="noopener noreferrer">環準同型</a> だから，\(f(m)f(n&#x27;) = f(m)f(&#x27;n)\) ．</p>
+<p>ゆえに，</p>
+<div class="notion-equation">\[\frac{f(m)}{f(n)} = \frac{f(m&#x27;)}{f(n&#x27;)}\]</div>
+<p>以上より， \(\Phi\) は well-defined である．</p>
+<div class="notion-equation">\[\Phi(1_\mathbb{Q})
+= \Phi \left( \frac{1_\mathbb{Z}}{1_\mathbb{Z}} \right)
+= \frac{f(1_\mathbb{Z})}{f(1_\mathbb{Z})}
+= \frac{1_K}{1_K}
+= 1_{\operatorname{Frac} ( f(\mathbb{Z}) )}\]</div></div></details></div>
+<div class="notion-callout"> <details class="notion-toggle"><summary>【 \(\Phi\) が<a class="notion-mention" href="https://www.notion.so/3b9db819351e803ea61ae4be7cf21a18" target="_blank" rel="noopener noreferrer">環準同型</a> であること 】</summary><div class="notion-toggle-body"><p>加法について，</p>
+<div class="notion-equation">\[\begin{align*}
+\Phi \left( \frac{m}{n} + \frac{r}{s} \right)
+&amp;= \Phi \left( \frac{ms + rn}{ns} \right) \\
+&amp;= \frac{f(ms + rn)}{f(ns)} \\
+&amp;= \frac{f(m)f(s) + f(r)f(n)}{f(n)f(s)} \\
+&amp;= \frac{f(m)f(s)}{f(n)f(s)} + \frac{f(r)f(n)}{f(n)f(s)} \\
+&amp;= \frac{f(m)}{f(n)} + \frac{f(r)}{f(s)} \\
+&amp;= \Phi \left( \frac{m}{n} \right) + \Phi \left( \frac{r}{s} \right)
+\end{align*}\]</div>
+<p>となるので，加法を保つ．</p>
+<p>乗法について，</p>
+<div class="notion-equation">\[\begin{align*}
+\Phi \left( \frac{m}{n} * \frac{r}{s} \right)
+&amp;= \Phi \left( \frac{mr}{ns} \right) \\
+&amp;= \frac{f(mr)}{f(ns)} \\
+&amp;= \frac{f(m)f(r)}{f(n)f(s)} \\
+&amp;= \frac{f(m)}{f(n)} * \frac{f(r)}{f(s)} \\
+&amp;= \Phi \left( \frac{m}{n} \right) * \Phi \left( \frac{r}{s} \right)
+\end{align*}\]</div>
+<p>となるので乗法を保つ．</p>
+<p>また，\(f\) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e803ea61ae4be7cf21a18" target="_blank" rel="noopener noreferrer">環準同型</a> だから，</p>
+<p>となって単位元を保つ．</p>
+<p>以上より，\(\Phi\) は<a class="notion-mention" href="https://www.notion.so/3b9db819351e803ea61ae4be7cf21a18" target="_blank" rel="noopener noreferrer">環準同型</a> である．</p></div></details></div>
+<div class="notion-callout"> <details class="notion-toggle"><summary>【 \(\Phi\) が<a class="notion-mention" href="https://www.notion.so/3c0db819351e8052a8a2d96d7398f376" target="_blank" rel="noopener noreferrer">全射</a> であること 】</summary><div class="notion-toggle-body"><p><a class="notion-mention" href="https://www.notion.so/3b9db819351e80ff9f16c1af8ea8a03d" target="_blank" rel="noopener noreferrer">商体（分数体）</a> \(\operatorname{Frac} (f(\mathbb{Z}))\) の任意の元をとると，その元は</p>
+<div class="notion-equation">\[\frac{a}{b}　(a, b \in f(\mathbb{Z})，b \neq 0)\]</div>
+<p>と表せる．</p>
+<p>さらに，\(a, b \in f(\mathbb{Z})\) だから，ある \(m, n \in \mathbb{Z}\) が存在して，\(a = f(m)，b = f(n)\) と表せる．</p>
+<p>ゆえに，</p>
+<div class="notion-equation">\[\frac{a}{b}
+= \frac{f(m)}{f(n)}
+= \Phi \left( \frac{m}{n} \right)\]</div>
+<p>となるので，\(\Phi\) は<a class="notion-mention" href="https://www.notion.so/3c0db819351e8052a8a2d96d7398f376" target="_blank" rel="noopener noreferrer">全射</a> ．</p></div></details></div>
+<div class="notion-callout"> <details class="notion-toggle"><summary>【 \(\Phi\) が<a class="notion-mention" href="https://www.notion.so/3c0db819351e80ea9dc9d04768085671" target="_blank" rel="noopener noreferrer">単射</a> であること 】</summary><div class="notion-toggle-body"><p>\(\ker \Phi = \{ 0_\mathbb{Q} \}\) となることを示す．</p>
+<p>\(\Phi \left( \frac{m}{n} \right) = 0_{\operatorname{Frac} (f(\mathbb{Z}))}\) とする．</p>
+<p>このとき，\(\frac{f(m)}{f(n)} = 0_{\operatorname{Frac} (f(\mathbb{Z}))}\) ．</p>
+<p>\(f(n) \neq 0\) だから，\(f(m) = 0\) であり，\(f\) は<a class="notion-mention" href="https://www.notion.so/3c0db819351e80ea9dc9d04768085671" target="_blank" rel="noopener noreferrer">単射</a> だから，\(m = 0\) ．</p>
+<p>ゆえに，\(\frac{m}{n} = 0\) ．</p>
+<p>したがって，\(\ker \Phi = \{ 0_\mathbb{Q} \}\) となり，\(\Phi\) は<a class="notion-mention" href="https://www.notion.so/3c0db819351e80ea9dc9d04768085671" target="_blank" rel="noopener noreferrer">単射</a> ．</p></div></details></div>
+<p>以上より，\(\Phi : \mathbb{Q} \to \operatorname{Frac} \{ f(\mathbb{Z}) \}\) は<a class="notion-mention" href="https://www.notion.so/3c0db819351e80fb90ddfb9d3db05bdc" target="_blank" rel="noopener noreferrer">全単射</a> な<a class="notion-mention" href="https://www.notion.so/3b9db819351e803ea61ae4be7cf21a18" target="_blank" rel="noopener noreferrer">環準同型</a> だから，<a class="notion-mention" href="https://www.notion.so/3b9db819351e80fbb144e56c75b8a5ef" target="_blank" rel="noopener noreferrer">環同型</a> ．</p>
+<p>したがって，\(\mathbb{Q} \cong \operatorname{Frac} \{ f(\mathbb{Z}) \}\) ．</p></div></details></div>
+<div class="notion-callout"> <details class="notion-toggle"><summary>（ \(\mathbb{Z} / p \mathbb{Z} \cong f(\mathbb{Z})\) のとき ）</summary><div class="notion-toggle-body"></div></details>
+</div></div></details></div>
+
+</section>
+
+<section class="notion-linked-entry" id="notion-3b9db819351e80a2a54cf8f5b7d10a59">
+  <div class="notion-linked-header">
+    <span>Theorem</span>
+    <a href="https://curved-turner-4ce.notion.site/1-1-1_Cor01-3b9db819351e80a2a54cf8f5b7d10a59" target="_blank" rel="noopener noreferrer">1.1.1_Cor01 ↗</a>
+  </div>
+<div class="notion-callout"> <h3>1.1.1_Cor01</h3>
+<hr>
+<p>\(K\) の標数が \(p &gt; 0\) ならば，<a class="notion-mention" href="https://www.notion.so/3b9db819351e80bb9553f76493c34b82" target="_blank" rel="noopener noreferrer">写像</a> \(\sigma : x \mapsto x^p\) によって \(K\) はその部分体 \(K^p\) の上に同型に移される．</p>
+<hr>
+<details class="notion-toggle"><summary>証明</summary><div class="notion-toggle-body"></div></details></div>
+
+
+
+
+</section>
+<article class="entry notion-linked-entry" id="notion-3b9db819-351e-80a2-a54c-f8f5b7d10a59">
+<header class="entry-header"><div>
+<div class="eyebrow">1.1.1 · notion-3b9db819-351e-80a2-a54c-f8f5b7d10a59</div>
+<h2>1.1.1_Cor01</h2></div>
+<span class="status formalized">Formalized</span></header>
+<div class="split">
+<section class="natural-language notion-linked-meta">
+<div class="book-label main-label">Notion ↔ Lean</div>
+<div class="correspondence-note">自然言語の定理文は直前の Notion ブロックを正本として表示しています。</div>
+<dl>
+<dt>Lean declaration</dt><dd><button type="button" class="declaration-button" data-entry-id="notion-3b9db819-351e-80a2-a54c-f8f5b7d10a59">SerreNumberTheory.myFrobeniusEquivPowers</button></dd>
+<dt>Notion</dt><dd><a class="notion-card-link" href="https://curved-turner-4ce.notion.site/1-1-1_Cor01-3b9db819351e80a2a54cf8f5b7d10a59" target="_blank" rel="noopener noreferrer">1.1.1_Cor01 ↗</a></dd>
+<dt>Source</dt><dd><a class="notion-card-link" href="https://github.com/are4c4/SerreNumberTheoryBlueprint/blob/main/SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean#L172-L175" target="_blank" rel="noopener noreferrer">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean : L172–L175 ↗</a></dd>
+</dl></section>
+<section class="lean-code"><div class="lean-heading"><h3>Lean</h3>
+<span class="lean-name">SerreNumberTheory.myFrobeniusEquivPowers</span>
+</div>
+<pre class="lean-pre"><code class="lean-source" data-entry-id="notion-3b9db819-351e-80a2-a54c-f8f5b7d10a59" data-start-line="172">noncomputable def myFrobeniusEquivPowers :
+    K ≃+* MyFrobeniusPowers K p := by
+  apply RingEquiv.ofBijective (myFrobeniusToPowers K p)
+  exact myFrobeniusToPowers_bijective K p</code></pre>
+
+
+</section></div>
+
+
+<div id="explanation-notion-3b9db819-351e-80a2-a54c-f8f5b7d10a59" class="explanation-data" hidden>
+<span class="exp-title">1.1.1_Cor01</span>
+<span class="exp-decl">SerreNumberTheory.myFrobeniusEquivPowers</span>
+<span class="exp-body">Notion DB の `Lean declarations` に登録された完全修飾宣言名をキーに、同じリポジトリ内の実 Lean ファイルから宣言本体と行番号を取得する。</span>
+<span class="exp-source">are4c4/SerreNumberTheoryBlueprint</span>
+<span class="exp-path">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean</span>
+<span class="exp-lines">L172–L175</span>
+</div>
+</article>
+<h3 class="doc-heading doc-heading-3" id="topic-characteristic">標数</h3>
+<article class="entry" id="field_characteristic">
+<header class="entry-header"><div>
+<div class="eyebrow">1.1.1 · field_characteristic</div>
+<h2>体の標数</h2></div>
+<span class="status planned">Planned</span></header>
+<div class="split">
+<section class="natural-language">
+<div class="book-label main-label">Definition</div>
+<div class="math-text statement">体 \(K\) において、\[n\cdot 1_K=0\] を満たす最小の正整数 \(n\) が存在するとき、その \(n\) を \(K\) の標数という。そのような正整数が存在しないとき、標数は \(0\) であるという。</div>
+
+<div class="book-block remark-block">
+<div class="book-label">Remark</div>
+<div class="math-text">Lean では標数を表すために `CharP K p` という型クラスを利用する。</div>
+</div>
+<dl>
+<dt>Lean declaration</dt><dd>—</dd>
+<dt>Dependencies</dt><dd class="dependencies">—</dd>
+</dl></section>
+<section class="lean-code"><div class="lean-heading"><h3>Lean</h3>
+
+</div>
+<div class="no-code">この項目専用の Lean 宣言は登録されていません。</div>
+<div class="source-location"><span>Source</span><a href="https://github.com/are4c4/SerreNumberTheoryBlueprint/blob/main/SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean" target="_blank" rel="noopener noreferrer">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean ↗</a></div>
+
+</section></div>
+
+
+<div id="explanation-field_characteristic" class="explanation-data" hidden>
+<span class="exp-title">体の標数</span>
+<span class="exp-decl"></span>
+<span class="exp-body">この概念専用の自作宣言は置かず、Mathlib の `CharP` を利用しています。</span>
+<span class="exp-source">are4c4/SerreNumberTheoryBlueprint</span>
+<span class="exp-path">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean</span>
+<span class="exp-lines"></span>
+</div>
+</article>
+<article class="entry" id="field_char_is_prime_or_zero">
+<header class="entry-header"><div>
+<div class="eyebrow">1.1.1 · field_char_is_prime_or_zero</div>
+<h2>体の標数は素数または0</h2></div>
+<span class="status formalized">Formalized</span></header>
+<div class="split">
+<section class="natural-language">
+<div class="book-label main-label">Theorem</div>
+<div class="math-text statement">体 \(K\) の標数 \(p\) は、素数または \(0\) である。</div>
+<div class="book-block proof-block">
+<div class="book-label">Proof</div>
+<div class="math-text">正の標数 \(p\) が合成数 \(p=ab\) なら、\[(a\cdot 1_K)(b\cdot 1_K)=p\cdot 1_K=0.\] 体は整域なので一方が 0 となり、標数の最小性に反する。</div>
+</div>
+
+<dl>
+<dt>Lean declaration</dt><dd><button type="button" class="declaration-button" data-entry-id="field_char_is_prime_or_zero">SerreNumberTheory.field_char_is_prime_or_zero</button></dd>
+<dt>Dependencies</dt><dd class="dependencies"><a class="dependency-chip" href="#field_characteristic">field_characteristic</a></dd>
+</dl></section>
+<section class="lean-code"><div class="lean-heading"><h3>Lean</h3>
+<span class="lean-name">SerreNumberTheory.field_char_is_prime_or_zero</span>
+</div>
+<pre class="lean-pre"><code class="lean-source" data-entry-id="field_char_is_prime_or_zero" data-start-line="27">theorem field_char_is_prime_or_zero :
+    Nat.Prime p ∨ p = 0 := by
+  exact CharP.char_is_prime_or_zero K p</code></pre>
+<div class="source-location"><span>Source</span><a href="https://github.com/are4c4/SerreNumberTheoryBlueprint/blob/main/SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean#L27-L29" target="_blank" rel="noopener noreferrer">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean : L27–L29 ↗</a></div>
+<div class="lean-hint">青い下線の宣言名をクリックすると型・説明・出典を表示します。</div>
+</section></div>
+<details class="proof-steps">
+<summary>Proof correspondence <span>自然言語 ↔ Lean</span></summary>
+<div class="steps-body">
+<div class="step-row">
+<div class="step-natural"><span class="step-number">1</span><div class="math-text">目標は標数 \(p\) が素数または \(0\) であること。</div></div>
+<div class="step-lean"><pre><code class="language-lean proof-code">Nat.Prime p ∨ p = 0</code></pre></div>
+</div>
+<div class="step-row">
+<div class="step-natural"><span class="step-number">2</span><div class="math-text">Mathlib の一般定理を適用する。</div></div>
+<div class="step-lean"><pre><code class="language-lean proof-code">exact CharP.char_is_prime_or_zero K p</code></pre></div>
+</div>
+</div>
+</details>
+<span class="ref-data" hidden data-name="CharP.char_is_prime_or_zero" data-type="Nat.Prime p ∨ p = 0" data-description="`CharP K p` のもとで標数が素数または0であることを与える定理。" data-source="Mathlib"></span>
+<div id="explanation-field_char_is_prime_or_zero" class="explanation-data" hidden>
+<span class="exp-title">体の標数は素数または0</span>
+<span class="exp-decl">SerreNumberTheory.field_char_is_prime_or_zero</span>
+<span class="exp-body">`CharP.char_is_prime_or_zero K p` が主張を直接与えます。</span>
+<span class="exp-source">are4c4/SerreNumberTheoryBlueprint</span>
+<span class="exp-path">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean</span>
+<span class="exp-lines">L27–L29</span>
+</div>
+</article>
+<h3 class="doc-heading doc-heading-3" id="topic-frobenius">Frobenius写像</h3>
+<article class="entry" id="frobenius_map">
+<header class="entry-header"><div>
+<div class="eyebrow">1.1.1 · frobenius_map</div>
+<h2>Frobenius写像</h2></div>
+<span class="status formalized">Formalized</span></header>
+<div class="split">
+<section class="natural-language">
+<div class="book-label main-label">Definition</div>
+<div class="math-text statement">標数 \(p\) の体 \(K\) に対し、\[F:K\to K,\qquad F(x)=x^p\] で定まる写像を Frobenius 写像という。</div>
+
+
+<dl>
+<dt>Lean declaration</dt><dd><button type="button" class="declaration-button" data-entry-id="frobenius_map">SerreNumberTheory.myFrobeniusFun</button></dd>
+<dt>Dependencies</dt><dd class="dependencies">—</dd>
+</dl></section>
+<section class="lean-code"><div class="lean-heading"><h3>Lean</h3>
+<span class="lean-name">SerreNumberTheory.myFrobeniusFun</span>
+</div>
+<pre class="lean-pre"><code class="lean-source" data-entry-id="frobenius_map" data-start-line="50">def myFrobeniusFun : K → K :=
+  fun x ↦ x ^ p</code></pre>
+<div class="source-location"><span>Source</span><a href="https://github.com/are4c4/SerreNumberTheoryBlueprint/blob/main/SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean#L50-L51" target="_blank" rel="noopener noreferrer">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean : L50–L51 ↗</a></div>
+
+</section></div>
+
+
+<div id="explanation-frobenius_map" class="explanation-data" hidden>
+<span class="exp-title">Frobenius写像</span>
+<span class="exp-decl">SerreNumberTheory.myFrobeniusFun</span>
+<span class="exp-body">`myFrobeniusFun` は `x : K` を `x ^ p` に送る関数です。</span>
+<span class="exp-source">are4c4/SerreNumberTheoryBlueprint</span>
+<span class="exp-path">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean</span>
+<span class="exp-lines">L50–L51</span>
+</div>
+</article>
+<article class="entry" id="frobenius_zero">
+<header class="entry-header"><div>
+<div class="eyebrow">1.1.1 · frobenius_zero</div>
+<h2>Frobenius写像は0を保つ</h2></div>
+<span class="status formalized">Formalized</span></header>
+<div class="split">
+<section class="natural-language">
+<div class="book-label main-label">Theorem</div>
+<div class="math-text statement">Frobenius 写像 \(F\) は \(0\) を \(0\) に送る：\[F(0)=0.\]</div>
+<div class="book-block proof-block">
+<div class="book-label">Proof</div>
+<div class="math-text">定義より \(F(0)=0^p\) であり、正の標数では \(p\neq0\) なので \(0^p=0\)。</div>
+</div>
+
+<dl>
+<dt>Lean declaration</dt><dd><button type="button" class="declaration-button" data-entry-id="frobenius_zero">SerreNumberTheory.myFrobeniusFun_zero</button></dd>
+<dt>Dependencies</dt><dd class="dependencies"><a class="dependency-chip" href="#frobenius_map">frobenius_map</a></dd>
+</dl></section>
+<section class="lean-code"><div class="lean-heading"><h3>Lean</h3>
+<span class="lean-name">SerreNumberTheory.myFrobeniusFun_zero</span>
+</div>
+<pre class="lean-pre"><code class="lean-source" data-entry-id="frobenius_zero" data-start-line="56">theorem myFrobeniusFun_zero :
+    myFrobeniusFun K p 0 = 0 := by
+  unfold myFrobeniusFun
+  exact zero_pow (expChar_ne_zero K p)</code></pre>
+<div class="source-location"><span>Source</span><a href="https://github.com/are4c4/SerreNumberTheoryBlueprint/blob/main/SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean#L56-L59" target="_blank" rel="noopener noreferrer">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean : L56–L59 ↗</a></div>
+
+</section></div>
+
+
+<div id="explanation-frobenius_zero" class="explanation-data" hidden>
+<span class="exp-title">Frobenius写像は0を保つ</span>
+<span class="exp-decl">SerreNumberTheory.myFrobeniusFun_zero</span>
+<span class="exp-body">定義を展開し `zero_pow` を使います。</span>
+<span class="exp-source">are4c4/SerreNumberTheoryBlueprint</span>
+<span class="exp-path">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean</span>
+<span class="exp-lines">L56–L59</span>
+</div>
+</article>
+<article class="entry" id="frobenius_one">
+<header class="entry-header"><div>
+<div class="eyebrow">1.1.1 · frobenius_one</div>
+<h2>Frobenius写像は1を保つ</h2></div>
+<span class="status formalized">Formalized</span></header>
+<div class="split">
+<section class="natural-language">
+<div class="book-label main-label">Theorem</div>
+<div class="math-text statement">Frobenius 写像 \(F\) は \(1\) を \(1\) に送る：\[F(1)=1.\]</div>
+<div class="book-block proof-block">
+<div class="book-label">Proof</div>
+<div class="math-text">定義より \(F(1)=1^p=1\)。</div>
+</div>
+
+<dl>
+<dt>Lean declaration</dt><dd><button type="button" class="declaration-button" data-entry-id="frobenius_one">SerreNumberTheory.myFrobeniusFun_one</button></dd>
+<dt>Dependencies</dt><dd class="dependencies"><a class="dependency-chip" href="#frobenius_map">frobenius_map</a></dd>
+</dl></section>
+<section class="lean-code"><div class="lean-heading"><h3>Lean</h3>
+<span class="lean-name">SerreNumberTheory.myFrobeniusFun_one</span>
+</div>
+<pre class="lean-pre"><code class="lean-source" data-entry-id="frobenius_one" data-start-line="65">theorem myFrobeniusFun_one :
+    myFrobeniusFun K p 1 = 1 := by
+  unfold myFrobeniusFun
+  exact one_pow p</code></pre>
+<div class="source-location"><span>Source</span><a href="https://github.com/are4c4/SerreNumberTheoryBlueprint/blob/main/SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean#L65-L68" target="_blank" rel="noopener noreferrer">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean : L65–L68 ↗</a></div>
+
+</section></div>
+
+
+<div id="explanation-frobenius_one" class="explanation-data" hidden>
+<span class="exp-title">Frobenius写像は1を保つ</span>
+<span class="exp-decl">SerreNumberTheory.myFrobeniusFun_one</span>
+<span class="exp-body">定義を展開した後 `one_pow p` を使います。</span>
+<span class="exp-source">are4c4/SerreNumberTheoryBlueprint</span>
+<span class="exp-path">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean</span>
+<span class="exp-lines">L65–L68</span>
+</div>
+</article>
+<article class="entry" id="frobenius_mul">
+<header class="entry-header"><div>
+<div class="eyebrow">1.1.1 · frobenius_mul</div>
+<h2>Frobenius写像は積を保つ</h2></div>
+<span class="status formalized">Formalized</span></header>
+<div class="split">
+<section class="natural-language">
+<div class="book-label main-label">Theorem</div>
+<div class="math-text statement">任意の \(x,y\in K\) に対して、\[F(xy)=F(x)F(y).\]</div>
+<div class="book-block proof-block">
+<div class="book-label">Proof</div>
+<div class="math-text">\((xy)^p=x^py^p\) なので定義から従う。</div>
+</div>
+
+<dl>
+<dt>Lean declaration</dt><dd><button type="button" class="declaration-button" data-entry-id="frobenius_mul">SerreNumberTheory.myFrobeniusFun_mul</button></dd>
+<dt>Dependencies</dt><dd class="dependencies"><a class="dependency-chip" href="#frobenius_map">frobenius_map</a></dd>
+</dl></section>
+<section class="lean-code"><div class="lean-heading"><h3>Lean</h3>
+<span class="lean-name">SerreNumberTheory.myFrobeniusFun_mul</span>
+</div>
+<pre class="lean-pre"><code class="lean-source" data-entry-id="frobenius_mul" data-start-line="74">theorem myFrobeniusFun_mul (x y : K) :
+    myFrobeniusFun K p (x * y) =
+      myFrobeniusFun K p x * myFrobeniusFun K p y := by
+  unfold myFrobeniusFun
+  exact mul_pow x y p</code></pre>
+<div class="source-location"><span>Source</span><a href="https://github.com/are4c4/SerreNumberTheoryBlueprint/blob/main/SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean#L74-L78" target="_blank" rel="noopener noreferrer">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean : L74–L78 ↗</a></div>
+
+</section></div>
+
+
+<div id="explanation-frobenius_mul" class="explanation-data" hidden>
+<span class="exp-title">Frobenius写像は積を保つ</span>
+<span class="exp-decl">SerreNumberTheory.myFrobeniusFun_mul</span>
+<span class="exp-body">積の冪に関する `mul_pow x y p` を使います。</span>
+<span class="exp-source">are4c4/SerreNumberTheoryBlueprint</span>
+<span class="exp-path">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean</span>
+<span class="exp-lines">L74–L78</span>
+</div>
+</article>
+<article class="entry" id="frobenius_add">
+<header class="entry-header"><div>
+<div class="eyebrow">1.1.1 · frobenius_add</div>
+<h2>Frobenius写像は和を保つ</h2></div>
+<span class="status formalized">Formalized</span></header>
+<div class="split">
+<section class="natural-language">
+<div class="book-label main-label">Theorem</div>
+<div class="math-text statement">任意の \(x,y\in K\) に対して、\[F(x+y)=F(x)+F(y).\]</div>
+<div class="book-block proof-block">
+<div class="book-label">Proof</div>
+<div class="math-text">二項定理で \((x+y)^p\) を展開すると、標数 \(p\) では中間項が消えるため、\[(x+y)^p=x^p+y^p.\]</div>
+</div>
+
+<dl>
+<dt>Lean declaration</dt><dd><button type="button" class="declaration-button" data-entry-id="frobenius_add">SerreNumberTheory.myFrobeniusFun_add</button></dd>
+<dt>Dependencies</dt><dd class="dependencies"><a class="dependency-chip" href="#frobenius_map">frobenius_map</a></dd>
+</dl></section>
+<section class="lean-code"><div class="lean-heading"><h3>Lean</h3>
+<span class="lean-name">SerreNumberTheory.myFrobeniusFun_add</span>
+</div>
+<pre class="lean-pre"><code class="lean-source" data-entry-id="frobenius_add" data-start-line="83">theorem myFrobeniusFun_add (x y : K) :
+    myFrobeniusFun K p (x + y) =
+      myFrobeniusFun K p x + myFrobeniusFun K p y := by
+  unfold myFrobeniusFun
+  exact add_pow_expChar x y p</code></pre>
+<div class="source-location"><span>Source</span><a href="https://github.com/are4c4/SerreNumberTheoryBlueprint/blob/main/SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean#L83-L87" target="_blank" rel="noopener noreferrer">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean : L83–L87 ↗</a></div>
+<div class="lean-hint">青い下線の宣言名をクリックすると型・説明・出典を表示します。</div>
+</section></div>
+<details class="proof-steps">
+<summary>Proof correspondence <span>自然言語 ↔ Lean</span></summary>
+<div class="steps-body">
+<div class="step-row">
+<div class="step-natural"><span class="step-number">1</span><div class="math-text">Frobenius 写像の定義を使い、目標を p 乗の等式に直す。</div></div>
+<div class="step-lean"><pre><code class="language-lean proof-code">unfold myFrobeniusFun</code></pre></div>
+</div>
+<div class="step-row">
+<div class="step-natural"><span class="step-number">2</span><div class="math-text">標数 \(p\) では二項展開の中間項が消える。</div></div>
+<div class="step-lean"><pre><code class="language-lean proof-code">exact add_pow_expChar x y p</code></pre></div>
+</div>
+</div>
+</details>
+<span class="ref-data" hidden data-name="add_pow_expChar" data-type="(x + y) ^ p = x ^ p + y ^ p" data-description="指数標数 p の環における Freshman&#39;s dream を表す Mathlib の定理。" data-source="Mathlib"></span>
+<div id="explanation-frobenius_add" class="explanation-data" hidden>
+<span class="exp-title">Frobenius写像は和を保つ</span>
+<span class="exp-decl">SerreNumberTheory.myFrobeniusFun_add</span>
+<span class="exp-body">`add_pow_expChar x y p` が \((x+y)^p=x^p+y^p\) を与えます。</span>
+<span class="exp-source">are4c4/SerreNumberTheoryBlueprint</span>
+<span class="exp-path">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean</span>
+<span class="exp-lines">L83–L87</span>
+</div>
+</article>
+<article class="entry" id="frobenius_ring_hom">
+<header class="entry-header"><div>
+<div class="eyebrow">1.1.1 · frobenius_ring_hom</div>
+<h2>Frobenius写像は環準同型</h2></div>
+<span class="status formalized">Formalized</span></header>
+<div class="split">
+<section class="natural-language">
+<div class="book-label main-label">Definition</div>
+<div class="math-text statement">標数 \(p\) の体 \(K\) 上の Frobenius 写像 \(F(x)=x^p\) は環準同型としてまとめられる。</div>
+<div class="book-block proof-block">
+<div class="book-label">Proof</div>
+<div class="math-text">\(0,1\) を保ち、和と積を保つ性質を構造体の各フィールドに与える。</div>
+</div>
+
+<dl>
+<dt>Lean declaration</dt><dd><button type="button" class="declaration-button" data-entry-id="frobenius_ring_hom">SerreNumberTheory.myFrobenius</button></dd>
+<dt>Dependencies</dt><dd class="dependencies"><a class="dependency-chip" href="#frobenius_map">frobenius_map</a> <a class="dependency-chip" href="#frobenius_zero">frobenius_zero</a> <a class="dependency-chip" href="#frobenius_one">frobenius_one</a> <a class="dependency-chip" href="#frobenius_mul">frobenius_mul</a> <a class="dependency-chip" href="#frobenius_add">frobenius_add</a></dd>
+</dl></section>
+<section class="lean-code"><div class="lean-heading"><h3>Lean</h3>
+<span class="lean-name">SerreNumberTheory.myFrobenius</span>
+</div>
+<pre class="lean-pre"><code class="lean-source" data-entry-id="frobenius_ring_hom" data-start-line="99">def myFrobenius : K →+* K where
+  toFun := myFrobeniusFun K p
+
+  map_zero&#39; := by
+    exact myFrobeniusFun_zero K p
+
+  map_one&#39; := by
+    exact myFrobeniusFun_one K p
+
+  map_add&#39; := by
+    intro x y
+    exact myFrobeniusFun_add K p x y
+
+  map_mul&#39; := by
+    intro x y
+    exact myFrobeniusFun_mul K p x y</code></pre>
+<div class="source-location"><span>Source</span><a href="https://github.com/are4c4/SerreNumberTheoryBlueprint/blob/main/SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean#L99-L114" target="_blank" rel="noopener noreferrer">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean : L99–L114 ↗</a></div>
+
+</section></div>
+
+
+<div id="explanation-frobenius_ring_hom" class="explanation-data" hidden>
+<span class="exp-title">Frobenius写像は環準同型</span>
+<span class="exp-decl">SerreNumberTheory.myFrobenius</span>
+<span class="exp-body">`K →+* K` の各構造フィールドに直前の補題を与えています。</span>
+<span class="exp-source">are4c4/SerreNumberTheoryBlueprint</span>
+<span class="exp-path">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean</span>
+<span class="exp-lines">L99–L114</span>
+</div>
+</article>
+<article class="entry" id="frobenius_injective">
+<header class="entry-header"><div>
+<div class="eyebrow">1.1.1 · frobenius_injective</div>
+<h2>Frobenius写像は単射</h2></div>
+<span class="status formalized">Formalized</span></header>
+<div class="split">
+<section class="natural-language">
+<div class="book-label main-label">Theorem</div>
+<div class="math-text statement">体 \(K\) 上の Frobenius 写像は単射である。</div>
+<div class="book-block proof-block">
+<div class="book-label">Proof</div>
+<div class="math-text">体から体への単位元を保つ環準同型は単射になる。</div>
+</div>
+
+<dl>
+<dt>Lean declaration</dt><dd><button type="button" class="declaration-button" data-entry-id="frobenius_injective">SerreNumberTheory.myFrobenius_injective</button></dd>
+<dt>Dependencies</dt><dd class="dependencies"><a class="dependency-chip" href="#frobenius_ring_hom">frobenius_ring_hom</a></dd>
+</dl></section>
+<section class="lean-code"><div class="lean-heading"><h3>Lean</h3>
+<span class="lean-name">SerreNumberTheory.myFrobenius_injective</span>
+</div>
+<pre class="lean-pre"><code class="lean-source" data-entry-id="frobenius_injective" data-start-line="127">theorem myFrobenius_injective :
+    Function.Injective (myFrobenius K p) := by
+  exact (myFrobenius K p).injective</code></pre>
+<div class="source-location"><span>Source</span><a href="https://github.com/are4c4/SerreNumberTheoryBlueprint/blob/main/SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean#L127-L129" target="_blank" rel="noopener noreferrer">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean : L127–L129 ↗</a></div>
+
+</section></div>
+
+
+<div id="explanation-frobenius_injective" class="explanation-data" hidden>
+<span class="exp-title">Frobenius写像は単射</span>
+<span class="exp-decl">SerreNumberTheory.myFrobenius_injective</span>
+<span class="exp-body">Mathlib が体から出る環準同型に与える `.injective` を使います。</span>
+<span class="exp-source">are4c4/SerreNumberTheoryBlueprint</span>
+<span class="exp-path">SerreNumberTheory/Formalization/Chapter01/F010101FiniteFields.lean</span>
+<span class="exp-lines">L127–L129</span>
+</div>
+</article>
+</main></div>
+<dialog id="lean-dialog"><div class="dialog-inner"><div class="dialog-top"><div><h3 id="dialog-title"></h3><div id="dialog-declaration"></div></div><button id="dialog-close" class="dialog-close">閉じる</button></div><div id="dialog-type" class="dialog-type"></div><div id="dialog-meta" class="dialog-meta"></div><div id="dialog-body" class="dialog-body math-text"></div></div></dialog>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+ document.querySelectorAll('code.lean-source').forEach(code=>{const start=Number(code.dataset.startLine||1),lines=code.textContent.split('\n');code.innerHTML='';lines.forEach((line,i)=>{const row=document.createElement('span');row.className='code-row';const no=document.createElement('span');no.className='line-no';no.textContent=String(start+i);const body=document.createElement('span');body.className='line-body';body.innerHTML=window.hljs?hljs.highlight(line,{language:'lean',ignoreIllegals:true}).value:line;row.append(no,body);code.appendChild(row);});});
+ document.querySelectorAll('code.proof-code').forEach(code=>{if(window.hljs)hljs.highlightElement(code);});
+ const dialog=document.getElementById('lean-dialog'),title=document.getElementById('dialog-title'),decl=document.getElementById('dialog-declaration'),type=document.getElementById('dialog-type'),meta=document.getElementById('dialog-meta'),body=document.getElementById('dialog-body');
+ const show=(t,d,ty,desc,src)=>{title.textContent=t;decl.textContent=d;type.textContent=ty||'型情報なし';body.textContent=desc||'';meta.textContent=src?('出典: '+src):'';dialog.showModal();};
+ document.querySelectorAll('.declaration-button').forEach(b=>b.addEventListener('click',()=>{const s=document.getElementById('explanation-'+b.dataset.entryId);if(!s)return;show(s.querySelector('.exp-title').textContent,s.querySelector('.exp-decl').textContent,'',s.querySelector('.exp-body').textContent,[s.querySelector('.exp-source').textContent,s.querySelector('.exp-path').textContent,s.querySelector('.exp-lines').textContent].filter(Boolean).join(' / '));}));
+ document.querySelectorAll('code.lean-source').forEach(code=>{const card=code.closest('.entry'),refs=[...card.querySelectorAll('.ref-data')];if(!refs.length)return;refs.forEach(r=>{[...code.querySelectorAll('.line-body')].forEach(line=>{const walker=document.createTreeWalker(line,NodeFilter.SHOW_TEXT),nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);nodes.forEach(node=>{if(!node.nodeValue.includes(r.dataset.name))return;const parts=node.nodeValue.split(r.dataset.name),frag=document.createDocumentFragment();parts.forEach((p,i)=>{if(p)frag.appendChild(document.createTextNode(p));if(i<parts.length-1){const btn=document.createElement('button');btn.className='lean-ref';btn.type='button';btn.textContent=r.dataset.name;btn.addEventListener('click',()=>show(r.dataset.name,r.dataset.name,r.dataset.type,r.dataset.description,r.dataset.source));frag.appendChild(btn);}});node.parentNode.replaceChild(frag,node);});});});});
+ document.getElementById('dialog-close').addEventListener('click',()=>dialog.close());dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
+});
+</script></body></html>

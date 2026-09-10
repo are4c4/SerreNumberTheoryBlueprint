@@ -30,19 +30,17 @@ Manualという文書形式を使って、
 タイトルが" "であるVerso文書を作成し、
 以下にその本文を記述する。
 -/
-#doc (Manual) "有限体" =>
+#doc (Manual) "1.1.1 有限体" =>
 
-# 有限体の性質
+# 1.1.1 有限体
 
-## 有限体
+この節では，有限体の標数とFrobenius写像を調べ，
+有限体の位数，存在および一意性を示す．
 
- $`K` を体とする．
-
-### 標数の定義
-
+## 体の標数
 
 :::definition "field_characteristic"
-*体上の標数の定義*
+*体上の標数*
 
 体 $`K` において，
 $$`
@@ -56,12 +54,15 @@ n \cdot 1_K = 0
 
 :::lemma_ "field_char_is_prime_or_zero" (lean := "SerreNumberTheory.field_char_is_prime_or_zero") (uses := "field_characteristic")
 
-体 $`K` の標数は素数 $`p` または $`0` である．
+体 $`K` の標数は素数または $`0` である．
 :::
+
 :::proof "field_char_is_prime_or_zero"
+
 体は整域である．
 
-体 $`K` の標数が合成数 $`p=ab` であると仮定すると、
+体 $`K` の正の標数が合成数 $`p=ab` であると仮定する．
+このとき，
 $$`
 (a\cdot 1_K)(b\cdot 1_K)
 =
@@ -69,15 +70,18 @@ p\cdot 1_K
 =
 0
 `
-となる。体には零因子がないので、
+となる．
+
+体には零因子がないので，
 $$`
 a\cdot 1_K=0
 \qquad\text{または}\qquad
 b\cdot 1_K=0
 `
-である。これは標数 $`p` の最小性に反する。
+である．
 
-したがって、正の標数は素数である。
+これは，$`p` が標数として最小であることに反する．
+したがって，体の正の標数は素数である．
 :::
 
 ### 体上のFrobenius写像の定義
