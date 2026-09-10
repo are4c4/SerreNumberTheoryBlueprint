@@ -29,6 +29,7 @@ jobs:
   build:
     name: Build Blueprint Site
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - if: ${{ inputs.checkout_submodules }}
         uses: actions/checkout@v5
@@ -85,12 +86,17 @@ jobs:
           git submodule status || true
       - if: ${{ inputs.warm_dependency_cache }}
         name: Warm Lean dependency cache
+        timeout-minutes: 20
         run: |
-          lake exe cache get || true
+          if ! lake exe cache get; then
+            echo "::warning::Mathlib dependency cache download failed; the following build may need a cold compile."
+          fi
           if [ "${{ inputs.harness_enabled }}" = "true" ] && [ -f "${{ steps.harness.outputs.formalization_path }}/lakefile.lean" ]; then
             (
               cd "${{ steps.harness.outputs.formalization_path }}"
-              lake exe cache get || true
+              if ! lake exe cache get; then
+                echo "::warning::Formalization dependency cache download failed; the following build may need a cold compile."
+              fi
             )
           fi
       - if: ${{ inputs.harness_enabled }}
@@ -103,9 +109,38 @@ jobs:
       - if: ${{ inputs.harness_enabled }}
         name: Validate harness contract
         run: python3 tools/verso-harness/scripts/check_harness.py --project-root .
-      - name: Build Blueprint site
-        run: ./scripts/ci-pages.sh
+      - name: Build Verso Blueprint site
+        timeout-minutes: 30
+        run: lake exe vbp build
+      - name: Build semantic highlights
+        timeout-minutes: 30
+        run: |
+          lake build SerreNumberTheory:highlighted
+          lake build notion-highlight-export
+      - name: Assemble Notion viewer and Pages output
+        timeout-minutes: 10
+        run: |
+          # Keep scripts/ci-pages.sh usable as the one-shot local build command,
+          # while CI runs the expensive Lean build commands as separate steps so
+          # a slow or stuck phase is immediately visible in the Actions UI.
+          for command in \
+            'lake exe vbp build' \
+            'lake build SerreNumberTheory:highlighted' \
+            'lake build notion-highlight-export'
+          do
+            if ! grep -Fxq "$command" scripts/ci-pages.sh; then
+              echo "::error::Expected command missing from scripts/ci-pages.sh: $command"
+              exit 1
+            fi
+          done
+          sed \
+            -e '/^lake exe vbp build$/d' \
+            -e '/^lake build SerreNumberTheory:highlighted$/d' \
+            -e '/^lake build notion-highlight-export$/d' \
+            scripts/ci-pages.sh > "$RUNNER_TEMP/ci-pages-assemble.sh"
+          bash "$RUNNER_TEMP/ci-pages-assemble.sh"
       - name: Export theorem proof status
+        timeout-minutes: 10
         run: |
           lake env lean ProofStatusExport.lean
           python3 scripts/add-proof-status-ui.py
