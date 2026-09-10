@@ -45,13 +45,13 @@ variable (p : ℕ) [Fact p.Prime] [CharP K p]
 section PowerMap
 
 /--
-`p`乗写像を通常の関数として定義する。
+`p`乗写像を通常の関数として定義する．
 -/
 def myFrobeniusFun : K → K :=
   fun x ↦ x ^ p
 
 /--
-`p`乗写像は `0` を `0` に送る。
+`p`乗写像は `0` を `0` に送る．
 -/
 theorem myFrobeniusFun_zero :
     myFrobeniusFun K p 0 = 0 := by
@@ -60,7 +60,7 @@ theorem myFrobeniusFun_zero :
 
 omit [Fact p.Prime] [CharP K p] in
 /--
-`p`乗写像は `1` を `1` に送る。
+`p`乗写像は `1` を `1` に送る．
 -/
 theorem myFrobeniusFun_one :
     myFrobeniusFun K p 1 = 1 := by
@@ -69,7 +69,7 @@ theorem myFrobeniusFun_one :
 
 omit [Fact p.Prime] [CharP K p] in
 /--
-`p`乗写像は乗法を保つ。
+`p`乗写像は乗法を保つ．
 -/
 theorem myFrobeniusFun_mul (x y : K) :
     myFrobeniusFun K p (x * y) =
@@ -78,7 +78,7 @@ theorem myFrobeniusFun_mul (x y : K) :
   exact mul_pow x y p
 
 /--
-標数 `p` では、`p`乗写像は加法を保つ。
+標数 `p` では、`p`乗写像は加法を保つ．
 -/
 theorem myFrobeniusFun_add (x y : K) :
     myFrobeniusFun K p (x + y) =
@@ -94,7 +94,7 @@ end PowerMap
 section RingHom
 
 /--
-`x ↦ x ^ p`で与えられるFrobenius環準同型。
+`x ↦ x ^ p`で与えられるFrobenius環準同型．
 -/
 def myFrobenius : K →+* K where
   toFun := myFrobeniusFun K p
@@ -114,7 +114,7 @@ def myFrobenius : K →+* K where
     exact myFrobeniusFun_mul K p x y
 
 /--
-自作したFrobenius環準同型の値は `x ^ p` である。
+自作したFrobenius環準同型の値は `x ^ p` である．
 -/
 @[simp]
 theorem myFrobenius_apply (x : K) :
@@ -122,7 +122,7 @@ theorem myFrobenius_apply (x : K) :
   rfl
 
 /--
-自作したFrobenius環準同型は単射である。
+自作したFrobenius環準同型は単射である．
 -/
 theorem myFrobenius_injective :
     Function.Injective (myFrobenius K p) := by
@@ -135,20 +135,20 @@ end RingHom
 section Equivalence
 
 /--
-自作したFrobenius写像の像を、型 `K^p` とみなす。
+自作したFrobenius写像の像を、型 `K^p` とみなす．
 -/
 abbrev MyFrobeniusPowers : Type _ :=
   (myFrobenius K p).fieldRange
 
 /--
-Frobenius写像の終域を、その像 `K^p` に制限する。
+Frobenius写像の終域を、その像 `K^p` に制限する．
 -/
 def myFrobeniusToPowers :
     K →+* MyFrobeniusPowers K p :=
   (myFrobenius K p).rangeRestrictField
 
 /--
-像に終域を制限したFrobenius写像は全単射である。
+像に終域を制限したFrobenius写像は全単射である．
 -/
 theorem myFrobeniusToPowers_bijective :
     Function.Bijective (myFrobeniusToPowers K p) := by
@@ -167,7 +167,7 @@ theorem myFrobeniusToPowers_bijective :
     exact hx
 
 /--
-Frobenius写像による `K` と `K^p` の環同型。
+Frobenius写像による `K` と `K^p` の環同型．
 -/
 noncomputable def myFrobeniusEquivPowers :
     K ≃+* MyFrobeniusPowers K p := by
@@ -191,17 +191,22 @@ theorem finiteField_char_is_prime
     (K : Type*) [Field K] [Fintype K]
     (p : ℕ) [CharP K p] :
     Nat.Prime p := by
-  rcases field_char_is_prime_or_zero K p with hp | hp
+  rcases field_char_is_prime_or_zero K p with hp1 | hp2 --s 名前を区別
   · -- p=素数
-    exact hp
+    exact hp1
   · -- p=0
-    exact (CharP.char_ne_zero_of_finite K p hp).elim -- elim：矛盾Falseから任意の命題を導く
+    by_contra! --s
+    exact (CharP.char_ne_zero_of_finite K p hp2).elim -- elim：矛盾Falseから任意の命題を導く
 
 variable (K : Type*) [Field K] [Fintype K] -- Kは有限体
 variable (p : ℕ) [Fact p.Prime] [CharP K p] --有限体Kの標数は素数p
 
-local instance : Algebra (ZMod p) K :=
-  ZMod.algebra K p
+/--
+`ZMod.algebra K p`によって得られる`ZMod p`上の代数構造を，
+この`section`で使う型クラスインスタンスとして登録する．
+-/
+local instance : Algebra (ZMod p) K := -- ZMod p：整数をpで割った余りだけで考える集合
+  ZMod.algebra K p -- `ZMod p`を`K`の素体として埋め込む
 
 /--
 標数 `p` の有限体 `K` の位数は，
@@ -227,12 +232,13 @@ variable (p f : ℕ) [Fact p.Prime]
 -/
 theorem galoisField_card
     (hf : f ≠ 0) :
-    Nat.card (GaloisField p f) = p ^ f := by
+    Nat.card (GaloisField p f) = p ^ f := by -- GaloisField p f：mathlibで構成された標準的なp^f個の元を持つ有限体
   exact GaloisField.card p f hf
 
 /--
 `GaloisField p f`は，`ZMod p`上で
 `X ^ (p ^ f) - X`の分解体である．
+（`GaloisField p f`は，`ZMod p`上の多項式`X ^ (p ^ f) - X`の根を全て含む最小の体である．）
 -/
 theorem galoisField_isSplittingField
     (hf : f ≠ 0) :
@@ -290,6 +296,7 @@ theorem galoisField_isRoot_X_pow_sub_X
 /--
 `GaloisField p f`の元全体は，
 `X ^ (p ^ f) - X`の根全体である．
+（集合`GaloisField p f`は`X ^ (p ^ f) - X`の（`GaloisField p f`上の）根を全て集めた集合と等しい．）
 -/
 theorem galoisField_setOf_isRoot_eq_univ
     (hf : f ≠ 0) :
@@ -434,7 +441,7 @@ theorem mem_frobeniusFixedSubfield_iff_isRoot
   · intro hx
     exact sub_eq_zero.mp hx
 
-omit [Fact p.Prime] [CharP Ω p] in
+omit [Fact p.Prime] [CharP Ω p] in -- omit：周囲で宣言されている変数や型クラス仮定のうち，この定理では使わないものを除外する
 /--
 代数閉体`Ω`上で，
 `X ^ (p ^ f) - X`は完全に分解する．
