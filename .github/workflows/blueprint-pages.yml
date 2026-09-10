@@ -47,25 +47,27 @@ jobs:
         id: harness
         run: python3 tools/verso-harness/scripts/export_ci_env.py --project-root . >> "$GITHUB_OUTPUT"
       - name: Restore Lake package cache
+        id: lake-package-cache
         uses: actions/cache@v5
         with:
-          path: |
-            .lake/packages/VersoBlueprint
-            .lake/packages/mathlib
-            .lake/packages/subverso
-            .lake/packages/verso
-          key: ${{ runner.os }}-lake-packages-v2-${{ hashFiles('lean-toolchain', 'lake-manifest.json', '.gitmodules') }}
+          # Cache the complete Lake dependency tree, including compiled outputs
+          # for transitive Verso dependencies such as Illuminate and MD4Lean.
+          path: .lake/packages
+          key: ${{ runner.os }}-lake-packages-v3-${{ hashFiles('lean-toolchain', 'lake-manifest.json', '.gitmodules') }}
           restore-keys: |
+            ${{ runner.os }}-lake-packages-v3-
+            ${{ runner.os }}-lake-packages-v2-${{ hashFiles('lean-toolchain', 'lake-manifest.json', '.gitmodules') }}
             ${{ runner.os }}-lake-packages-v2-
       - name: Restore root Lean build cache
         uses: actions/cache@v5
         with:
-          path: |
-            .lake/build/lib
-            .lake/build/ir
-          key: ${{ runner.os }}-lean-build-v2-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'lakefile.lean', '.gitmodules', '*.lean', '**/*.lean', 'scripts/ci-pages.sh') }}
+          # Keep executables and generated facets as well as lib/ir so a prior
+          # build can be reused incrementally after a source-only change.
+          path: .lake/build
+          key: ${{ runner.os }}-lean-build-v3-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'lakefile.lean', '.gitmodules') }}-${{ hashFiles('*.lean', 'SerreNumberTheory/**/*.lean', 'MiniBlueprint/**/*.lean', 'scripts/ci-pages.sh') }}
           restore-keys: |
-            ${{ runner.os }}-lean-build-v2-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'lakefile.lean', '.gitmodules') }}-
+            ${{ runner.os }}-lean-build-v3-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'lakefile.lean', '.gitmodules') }}-
+            ${{ runner.os }}-lean-build-v3-
             ${{ runner.os }}-lean-build-v2-
       - if: ${{ inputs.harness_enabled }}
         name: Restore formalization Lean build cache
@@ -84,7 +86,7 @@ jobs:
           lake --version
           python3 --version
           git submodule status || true
-      - if: ${{ inputs.warm_dependency_cache }}
+      - if: ${{ inputs.warm_dependency_cache && steps.lake-package-cache.outputs.cache-hit != 'true' }}
         name: Warm Lean dependency cache
         timeout-minutes: 20
         run: |
@@ -148,6 +150,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
+          name: github-pages-${{ github.run_attempt }}
           path: _out/site/html-multi
 
   deploy:
@@ -161,3 +164,5 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
