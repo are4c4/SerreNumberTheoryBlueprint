@@ -18,6 +18,11 @@ private def tokenTitle : Token.Kind → Option String
   | .var _ type _ => some type
   | .wildcard type _ => some type
   | .option _ _ docs => docs
+  | .keyword _ _ docs => docs
+  | .delim _ _ docs => docs
+  | .operator _ _ docs => docs
+  | .bracket _ _ docs => docs
+  | .separator _ _ docs => docs
   | .sort docs => docs
   | .withType type => some type
   | .num type _ => type
@@ -25,6 +30,10 @@ private def tokenTitle : Token.Kind → Option String
 
 private def docsMetadata (docs : Option String) : String :=
   docs.map (fun d => s!" data-docs=\"{escapeHtml d}\"") |>.getD ""
+
+private def syntaxMetadata (semantic : String) (name : Option Name) (docs : Option String) : String :=
+  let syntaxName := name.map (fun n => s!" data-syntax-name=\"{escapeHtml (toString n)}\"") |>.getD ""
+  s!" data-semantic=\"{semantic}\"{syntaxName}{docsMetadata docs}"
 
 private def tokenMetadata : Token.Kind → String
   | .const name signature docs isDef _ =>
@@ -45,11 +54,11 @@ private def tokenMetadata : Token.Kind → String
   | .char _ => " data-semantic=\"char\""
   | .docComment => " data-semantic=\"doc-comment\""
   | .lineComment | .blockComment | .commentDelim => " data-semantic=\"comment\""
-  | .keyword .. => " data-semantic=\"keyword\""
-  | .operator .. => " data-semantic=\"operator\""
-  | .bracket .. => " data-semantic=\"bracket\""
-  | .separator .. => " data-semantic=\"separator\""
-  | .delim .. => " data-semantic=\"delimiter\""
+  | .keyword name _ docs => syntaxMetadata "keyword" name docs
+  | .operator name _ docs => syntaxMetadata "operator" name docs
+  | .bracket name _ docs => syntaxMetadata "bracket" name docs
+  | .separator name _ docs => syntaxMetadata "separator" name docs
+  | .delim name _ docs => syntaxMetadata "delimiter" name docs
   | .option _ _ docs => s!" data-semantic=\"option\"{docsMetadata docs}"
   | .withType type => s!" data-semantic=\"typed\" data-signature=\"{escapeHtml type}\""
   | .levelVar .. => " data-semantic=\"level-var\""
