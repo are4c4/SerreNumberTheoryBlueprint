@@ -34,6 +34,10 @@
   close.addEventListener('click', () => { panel.hidden = true; });
 
   const selector = '.lean-token[data-signature],.lean-token[data-docs],.lean-token[data-const-name]';
+  const decodeMeta = value => {
+    const text = String(value ?? '');
+    try { return decodeURIComponent(text); } catch { return text; }
+  };
   const label = text => {
     const node = document.createElement('div');
     node.className = 'lean-infoview-label';
@@ -49,14 +53,14 @@
 
   function showToken(target) {
     kind.textContent = target.dataset.semantic || 'info';
-    title.textContent = target.dataset.constName || target.textContent.trim();
+    title.textContent = decodeMeta(target.dataset.constName || target.textContent.trim());
     body.replaceChildren();
-    if (target.dataset.signature) { label('Type'); pre(target.dataset.signature); }
+    if (target.dataset.signature) { label('Type'); pre(decodeMeta(target.dataset.signature)); }
     if (target.dataset.docs) {
       label('Documentation');
       const docs = document.createElement('div');
       docs.className = 'lean-infoview-docs';
-      docs.textContent = target.dataset.docs;
+      docs.textContent = decodeMeta(target.dataset.docs);
       body.appendChild(docs);
     }
     if (!target.dataset.signature && !target.dataset.docs) pre(target.textContent.trim());
@@ -100,8 +104,10 @@
     const target = event.target.closest?.(selector);
     if (!target || target === hovered) return;
     hovered = target;
-    const name = target.dataset.constName || target.textContent.trim();
-    tooltip.textContent = [name, target.dataset.signature, target.dataset.docs].filter(Boolean).join('\n\n');
+    const name = decodeMeta(target.dataset.constName || target.textContent.trim());
+    const signature = target.dataset.signature ? decodeMeta(target.dataset.signature) : '';
+    const docs = target.dataset.docs ? decodeMeta(target.dataset.docs) : '';
+    tooltip.textContent = [name, signature, docs].filter(Boolean).join('\n\n');
     tooltip.hidden = false;
   });
   document.addEventListener('mousemove', event => {

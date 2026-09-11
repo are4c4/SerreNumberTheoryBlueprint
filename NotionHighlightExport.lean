@@ -12,6 +12,12 @@ private def escapeHtml (s : String) : String :=
     |>.replace ">" "&gt;"
     |>.replace "\"" "&quot;"
 
+private def escapeHtmlMeta (s : String) : String :=
+  escapeHtml
+    (s.replace "%" "%25"
+      |>.replace "\r" "%0D"
+      |>.replace "\n" "%0A")
+
 private def tokenTitle : Token.Kind → Option String
   | .const _ signature docs _ _ => docs.orElse (fun _ => some signature)
   | .anonCtor _ signature docs _ => docs.orElse (fun _ => some signature)
@@ -29,7 +35,7 @@ private def tokenTitle : Token.Kind → Option String
   | _ => none
 
 private def docsMetadata (docs : Option String) : String :=
-  docs.map (fun d => s!" data-docs=\"{escapeHtml d}\"") |>.getD ""
+  docs.map (fun d => s!" data-docs=\"{escapeHtmlMeta d}\"") |>.getD ""
 
 private def syntaxMetadata (semantic : String) (name : Option Name) (docs : Option String) : String :=
   let syntaxName := name.map (fun n => s!" data-syntax-name=\"{escapeHtml (toString n)}\"") |>.getD ""
@@ -37,18 +43,18 @@ private def syntaxMetadata (semantic : String) (name : Option Name) (docs : Opti
 
 private def tokenMetadata : Token.Kind → String
   | .const name signature docs isDef _ =>
-      s!" data-semantic=\"const\" data-const-name=\"{escapeHtml (toString name)}\" data-signature=\"{escapeHtml signature}\" data-definition-site=\"{toString isDef}\"{docsMetadata docs}"
+      s!" data-semantic=\"const\" data-const-name=\"{escapeHtml (toString name)}\" data-signature=\"{escapeHtmlMeta signature}\" data-definition-site=\"{toString isDef}\"{docsMetadata docs}"
   | .anonCtor name signature docs _ =>
-      s!" data-semantic=\"constructor\" data-const-name=\"{escapeHtml (toString name)}\" data-signature=\"{escapeHtml signature}\"{docsMetadata docs}"
+      s!" data-semantic=\"constructor\" data-const-name=\"{escapeHtml (toString name)}\" data-signature=\"{escapeHtmlMeta signature}\"{docsMetadata docs}"
   | .var _ type _ =>
-      s!" data-semantic=\"variable\" data-signature=\"{escapeHtml type}\""
+      s!" data-semantic=\"variable\" data-signature=\"{escapeHtmlMeta type}\""
   | .wildcard type _ =>
-      s!" data-semantic=\"wildcard\" data-signature=\"{escapeHtml type}\""
+      s!" data-semantic=\"wildcard\" data-signature=\"{escapeHtmlMeta type}\""
   | .sort docs => s!" data-semantic=\"sort\"{docsMetadata docs}"
   | .moduleName name =>
       s!" data-semantic=\"module\" data-const-name=\"{escapeHtml (toString name)}\""
   | .num type _ =>
-      let ty := type.map (fun t => s!" data-signature=\"{escapeHtml t}\"") |>.getD ""
+      let ty := type.map (fun t => s!" data-signature=\"{escapeHtmlMeta t}\"") |>.getD ""
       s!" data-semantic=\"number\"{ty}"
   | .str _ _ => " data-semantic=\"string\""
   | .char _ => " data-semantic=\"char\""
@@ -60,7 +66,7 @@ private def tokenMetadata : Token.Kind → String
   | .separator name _ docs => syntaxMetadata "separator" name docs
   | .delim name _ docs => syntaxMetadata "delimiter" name docs
   | .option _ _ docs => s!" data-semantic=\"option\"{docsMetadata docs}"
-  | .withType type => s!" data-semantic=\"typed\" data-signature=\"{escapeHtml type}\""
+  | .withType type => s!" data-semantic=\"typed\" data-signature=\"{escapeHtmlMeta type}\""
   | .levelVar .. => " data-semantic=\"level-var\""
   | .levelConst .. => " data-semantic=\"level-const\""
   | .levelOp .. => " data-semantic=\"level-op\""
@@ -68,7 +74,7 @@ private def tokenMetadata : Token.Kind → String
 
 private def renderToken (tok : Token) : String × String :=
   let cls := tok.kind.cssClass
-  let title := tokenTitle tok.kind |>.map (fun t => s!" title=\"{escapeHtml t}\"") |>.getD ""
+  let title := tokenTitle tok.kind |>.map (fun t => s!" title=\"{escapeHtmlMeta t}\"") |>.getD ""
   let metadata := tokenMetadata tok.kind
   (s!"<span class=\"lean-token {cls}\"{title}{metadata}>{escapeHtml tok.content}</span>", tok.content)
 
