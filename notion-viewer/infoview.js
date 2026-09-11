@@ -34,6 +34,7 @@
   close.addEventListener('click', () => { panel.hidden = true; });
 
   const selector = '.lean-token[data-signature],.lean-token[data-docs],.lean-token[data-const-name]';
+  const tacticSelector = '.lean-token.keyword[data-syntax-name^="Lean.Parser.Tactic."],.lean-token.keyword[data-syntax-name="Lean.Parser.Term.byTactic"]';
   const decodeMeta = value => {
     const text = String(value ?? '');
     try { return decodeURIComponent(text); } catch { return text; }
@@ -67,11 +68,11 @@
     panel.hidden = false;
   }
 
-  function showGoals(marker) {
+  function showGoals(marker, sourceLabel = 'Proof state') {
     let goals = [];
     try { goals = JSON.parse(marker.dataset.goals || '[]'); } catch {}
     kind.textContent = 'Goal';
-    title.textContent = goals.length <= 1 ? 'Proof state' : `${goals.length} goals`;
+    title.textContent = goals.length <= 1 ? sourceLabel : `${goals.length} goals`;
     body.replaceChildren();
     if (!goals.length) { pre('ゴール情報を読み取れませんでした．'); panel.hidden = false; return; }
     goals.forEach((goal, index) => {
@@ -99,15 +100,40 @@
     panel.hidden = false;
   }
 
+  function nearestGoalMarker(target) {
+    const markers = Array.from(document.querySelectorAll('.lean-goal-marker'));
+    let found = null;
+    for (const marker of markers) {
+      if (marker === target || (marker.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+        found = marker;
+      }
+    }
+    return found;
+  }
+
+  function stripNativeTitles(root = document) {
+    root.querySelectorAll?.('.lean-token[title],.lean-goal-marker[title]').forEach(el => el.removeAttribute('title'));
+  }
+
+  stripNativeTitles();
+  const codeWrap = document.querySelector('.code-wrap');
+  if (codeWrap) {
+    new MutationObserver(() => stripNativeTitles(codeWrap)).observe(codeWrap, { childList: true, subtree: true });
+  }
+
   let hovered = null;
   document.addEventListener('mouseover', event => {
     const target = event.target.closest?.(selector);
     if (!target || target === hovered) return;
+    target.removeAttribute('title');
     hovered = target;
     const name = decodeMeta(target.dataset.constName || target.textContent.trim());
     const signature = target.dataset.signature ? decodeMeta(target.dataset.signature) : '';
     const docs = target.dataset.docs ? decodeMeta(target.dataset.docs) : '';
-    tooltip.textContent = [name, signature, docs].filter(Boolean).join('\n\n');
+    const proofHint = target.matches(tacticSelector) && nearestGoalMarker(target)
+      ? 'クリックするとこの位置の証明状態を表示します．'
+      : '';
+    tooltip.textContent = [name, signature, docs, proofHint].filter(Boolean).join('\n\n');
     tooltip.hidden = false;
   });
   document.addEventListener('mousemove', event => {
@@ -126,6 +152,15 @@
   document.addEventListener('click', event => {
     const marker = event.target.closest?.('.lean-goal-marker');
     if (marker) { event.preventDefault(); showGoals(marker); return; }
+    const tactic = event.target.closest?.(tacticSelector);
+    if (tactic) {
+      const proofMarker = nearestGoalMarker(tactic);
+      if (proofMarker) {
+        event.preventDefault();
+        showGoals(proofMarker, `${tactic.textContent.trim()} の証明状態`);
+        return;
+      }
+    }
     const target = event.target.closest?.(selector);
     if (target) { event.preventDefault(); showToken(target); }
   });
