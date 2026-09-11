@@ -12,10 +12,11 @@ private def escapeHtml (s : String) : String :=
     |>.replace ">" "&gt;"
     |>.replace "\"" "&quot;"
 
-private def escapeHtmlAttr (s : String) : String :=
-  escapeHtml s
-    |>.replace "\r" "&#13;"
-    |>.replace "\n" "&#10;"
+private def escapeHtmlMeta (s : String) : String :=
+  escapeHtml
+    (s.replace "%" "%25"
+      |>.replace "\r" "%0D"
+      |>.replace "\n" "%0A")
 
 private def tokenTitle : Token.Kind → Option String
   | .const _ signature docs _ _ => docs.orElse (fun _ => some signature)
@@ -34,26 +35,26 @@ private def tokenTitle : Token.Kind → Option String
   | _ => none
 
 private def docsMetadata (docs : Option String) : String :=
-  docs.map (fun d => s!" data-docs=\"{escapeHtmlAttr d}\"") |>.getD ""
+  docs.map (fun d => s!" data-docs=\"{escapeHtmlMeta d}\"") |>.getD ""
 
 private def syntaxMetadata (semantic : String) (name : Option Name) (docs : Option String) : String :=
-  let syntaxName := name.map (fun n => s!" data-syntax-name=\"{escapeHtmlAttr (toString n)}\"") |>.getD ""
+  let syntaxName := name.map (fun n => s!" data-syntax-name=\"{escapeHtml (toString n)}\"") |>.getD ""
   s!" data-semantic=\"{semantic}\"{syntaxName}{docsMetadata docs}"
 
 private def tokenMetadata : Token.Kind → String
   | .const name signature docs isDef _ =>
-      s!" data-semantic=\"const\" data-const-name=\"{escapeHtmlAttr (toString name)}\" data-signature=\"{escapeHtmlAttr signature}\" data-definition-site=\"{toString isDef}\"{docsMetadata docs}"
+      s!" data-semantic=\"const\" data-const-name=\"{escapeHtml (toString name)}\" data-signature=\"{escapeHtmlMeta signature}\" data-definition-site=\"{toString isDef}\"{docsMetadata docs}"
   | .anonCtor name signature docs _ =>
-      s!" data-semantic=\"constructor\" data-const-name=\"{escapeHtmlAttr (toString name)}\" data-signature=\"{escapeHtmlAttr signature}\"{docsMetadata docs}"
+      s!" data-semantic=\"constructor\" data-const-name=\"{escapeHtml (toString name)}\" data-signature=\"{escapeHtmlMeta signature}\"{docsMetadata docs}"
   | .var _ type _ =>
-      s!" data-semantic=\"variable\" data-signature=\"{escapeHtmlAttr type}\""
+      s!" data-semantic=\"variable\" data-signature=\"{escapeHtmlMeta type}\""
   | .wildcard type _ =>
-      s!" data-semantic=\"wildcard\" data-signature=\"{escapeHtmlAttr type}\""
+      s!" data-semantic=\"wildcard\" data-signature=\"{escapeHtmlMeta type}\""
   | .sort docs => s!" data-semantic=\"sort\"{docsMetadata docs}"
   | .moduleName name =>
-      s!" data-semantic=\"module\" data-const-name=\"{escapeHtmlAttr (toString name)}\""
+      s!" data-semantic=\"module\" data-const-name=\"{escapeHtml (toString name)}\""
   | .num type _ =>
-      let ty := type.map (fun t => s!" data-signature=\"{escapeHtmlAttr t}\"") |>.getD ""
+      let ty := type.map (fun t => s!" data-signature=\"{escapeHtmlMeta t}\"") |>.getD ""
       s!" data-semantic=\"number\"{ty}"
   | .str _ _ => " data-semantic=\"string\""
   | .char _ => " data-semantic=\"char\""
@@ -65,7 +66,7 @@ private def tokenMetadata : Token.Kind → String
   | .separator name _ docs => syntaxMetadata "separator" name docs
   | .delim name _ docs => syntaxMetadata "delimiter" name docs
   | .option _ _ docs => s!" data-semantic=\"option\"{docsMetadata docs}"
-  | .withType type => s!" data-semantic=\"typed\" data-signature=\"{escapeHtmlAttr type}\""
+  | .withType type => s!" data-semantic=\"typed\" data-signature=\"{escapeHtmlMeta type}\""
   | .levelVar .. => " data-semantic=\"level-var\""
   | .levelConst .. => " data-semantic=\"level-const\""
   | .levelOp .. => " data-semantic=\"level-op\""
@@ -73,7 +74,7 @@ private def tokenMetadata : Token.Kind → String
 
 private def renderToken (tok : Token) : String × String :=
   let cls := tok.kind.cssClass
-  let title := tokenTitle tok.kind |>.map (fun t => s!" title=\"{escapeHtmlAttr t}\"") |>.getD ""
+  let title := tokenTitle tok.kind |>.map (fun t => s!" title=\"{escapeHtmlMeta t}\"") |>.getD ""
   let metadata := tokenMetadata tok.kind
   (s!"<span class=\"lean-token {cls}\"{title}{metadata}>{escapeHtml tok.content}</span>", tok.content)
 
@@ -104,7 +105,7 @@ private def goalMarker (goals : Array (Highlighted.Goal Highlighted)) : String :
     ""
   else
     let json := Json.compress (.arr (goals.map goalToJson))
-    s!"<span class=\"lean-goal-marker\" data-goals=\"{escapeHtmlAttr json}\" title=\"このタクティク開始時のゴールを表示\" tabindex=\"0\"></span>"
+    s!"<span class=\"lean-goal-marker\" data-goals=\"{escapeHtml json}\" title=\"このタクティク開始時のゴールを表示\" tabindex=\"0\"></span>"
 
 private partial def renderHighlighted : Highlighted → String × String
   | .token tok => renderToken tok
