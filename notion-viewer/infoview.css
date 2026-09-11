@@ -6,6 +6,16 @@
   text-underline-offset: 2px;
 }
 
+.lean-proof-start:not(.lean-goal-marker),
+.lean-proof-end {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  vertical-align: baseline;
+  pointer-events: none;
+}
+
 .lean-goal-marker {
   display: inline-block;
   position: relative;
@@ -58,6 +68,11 @@
 
 .lean-infoview-panel[hidden] {
   display: none;
+}
+
+.lean-infoview-panel[data-mode="follow"] .lean-infoview-kind {
+  border-color: #5a7049;
+  color: #b5cea8;
 }
 
 .lean-infoview-head {
