@@ -12,43 +12,61 @@ private def escapeHtml (s : String) : String :=
     |>.replace ">" "&gt;"
     |>.replace "\"" "&quot;"
 
+private def escapeHtmlMeta (s : String) : String :=
+  escapeHtml
+    (s.replace "%" "%25"
+      |>.replace "\r" "%0D"
+      |>.replace "\n" "%0A")
+
 private def tokenTitle : Token.Kind → Option String
   | .const _ signature docs _ _ => docs.orElse (fun _ => some signature)
   | .anonCtor _ signature docs _ => docs.orElse (fun _ => some signature)
   | .var _ type _ => some type
   | .wildcard type _ => some type
   | .option _ _ docs => docs
+  | .keyword _ _ docs => docs
+  | .delim _ _ docs => docs
+  | .operator _ _ docs => docs
+  | .bracket _ _ docs => docs
+  | .separator _ _ docs => docs
   | .sort docs => docs
   | .withType type => some type
   | .num type _ => type
   | _ => none
 
+private def docsMetadata (docs : Option String) : String :=
+  docs.map (fun d => s!" data-docs=\"{escapeHtmlMeta d}\"") |>.getD ""
+
+private def syntaxMetadata (semantic : String) (name : Option Name) (docs : Option String) : String :=
+  let syntaxName := name.map (fun n => s!" data-syntax-name=\"{escapeHtml (toString n)}\"") |>.getD ""
+  s!" data-semantic=\"{semantic}\"{syntaxName}{docsMetadata docs}"
+
 private def tokenMetadata : Token.Kind → String
-  | .const name signature _ isDef _ =>
-      s!" data-semantic=\"const\" data-const-name=\"{escapeHtml (toString name)}\" data-signature=\"{escapeHtml signature}\" data-definition-site=\"{toString isDef}\""
-  | .anonCtor name signature _ _ =>
-      s!" data-semantic=\"constructor\" data-const-name=\"{escapeHtml (toString name)}\" data-signature=\"{escapeHtml signature}\""
+  | .const name signature docs isDef _ =>
+      s!" data-semantic=\"const\" data-const-name=\"{escapeHtml (toString name)}\" data-signature=\"{escapeHtmlMeta signature}\" data-definition-site=\"{toString isDef}\"{docsMetadata docs}"
+  | .anonCtor name signature docs _ =>
+      s!" data-semantic=\"constructor\" data-const-name=\"{escapeHtml (toString name)}\" data-signature=\"{escapeHtmlMeta signature}\"{docsMetadata docs}"
   | .var _ type _ =>
-      s!" data-semantic=\"variable\" data-signature=\"{escapeHtml type}\""
+      s!" data-semantic=\"variable\" data-signature=\"{escapeHtmlMeta type}\""
   | .wildcard type _ =>
-      s!" data-semantic=\"wildcard\" data-signature=\"{escapeHtml type}\""
-  | .sort _ => " data-semantic=\"sort\""
+      s!" data-semantic=\"wildcard\" data-signature=\"{escapeHtmlMeta type}\""
+  | .sort docs => s!" data-semantic=\"sort\"{docsMetadata docs}"
   | .moduleName name =>
       s!" data-semantic=\"module\" data-const-name=\"{escapeHtml (toString name)}\""
   | .num type _ =>
-      let ty := type.map (fun t => s!" data-signature=\"{escapeHtml t}\"") |>.getD ""
+      let ty := type.map (fun t => s!" data-signature=\"{escapeHtmlMeta t}\"") |>.getD ""
       s!" data-semantic=\"number\"{ty}"
   | .str _ _ => " data-semantic=\"string\""
   | .char _ => " data-semantic=\"char\""
   | .docComment => " data-semantic=\"doc-comment\""
   | .lineComment | .blockComment | .commentDelim => " data-semantic=\"comment\""
-  | .keyword .. => " data-semantic=\"keyword\""
-  | .operator .. => " data-semantic=\"operator\""
-  | .bracket .. => " data-semantic=\"bracket\""
-  | .separator .. => " data-semantic=\"separator\""
-  | .delim .. => " data-semantic=\"delimiter\""
-  | .option .. => " data-semantic=\"option\""
-  | .withType type => s!" data-semantic=\"typed\" data-signature=\"{escapeHtml type}\""
+  | .keyword name _ docs => syntaxMetadata "keyword" name docs
+  | .operator name _ docs => syntaxMetadata "operator" name docs
+  | .bracket name _ docs => syntaxMetadata "bracket" name docs
+  | .separator name _ docs => syntaxMetadata "separator" name docs
+  | .delim name _ docs => syntaxMetadata "delimiter" name docs
+  | .option _ _ docs => s!" data-semantic=\"option\"{docsMetadata docs}"
+  | .withType type => s!" data-semantic=\"typed\" data-signature=\"{escapeHtmlMeta type}\""
   | .levelVar .. => " data-semantic=\"level-var\""
   | .levelConst .. => " data-semantic=\"level-const\""
   | .levelOp .. => " data-semantic=\"level-op\""
@@ -56,9 +74,44 @@ private def tokenMetadata : Token.Kind → String
 
 private def renderToken (tok : Token) : String × String :=
   let cls := tok.kind.cssClass
-  let title := tokenTitle tok.kind |>.map (fun t => s!" title=\"{escapeHtml t}\"") |>.getD ""
+  let title := tokenTitle tok.kind |>.map (fun t => s!" title=\"{escapeHtmlMeta t}\"") |>.getD ""
   let metadata := tokenMetadata tok.kind
   (s!"<span class=\"lean-token {cls}\"{title}{metadata}>{escapeHtml tok.content}</span>", tok.content)
+
+private partial def plainHighlighted : Highlighted → String
+  | .token tok => tok.content
+  | .text s => s
+  | .unparsed s => s
+  | .point _ _ => ""
+  | .span _ content => plainHighlighted content
+  | .tactics _ _ _ content => plainHighlighted content
+  | .seq highlights => highlights.foldl (fun text h => text ++ plainHighlighted h) ""
+
+private def goalToJson (goal : Highlighted.Goal Highlighted) : Json :=
+  let hypotheses := goal.hypotheses.map fun h =>
+    Json.mkObj [
+      ("names", toJson (h.names.map (fun tok => tok.content))),
+      ("type", toJson (plainHighlighted h.typeAndVal))
+    ]
+  Json.mkObj [
+    ("name", toJson goal.name),
+    ("goalPrefix", toJson goal.goalPrefix),
+    ("hypotheses", .arr hypotheses),
+    ("conclusion", toJson (plainHighlighted goal.conclusion))
+  ]
+
+private def proofRangeMetadata (startPos endPos : Nat) : String :=
+  s!" data-proof-start=\"{startPos}\" data-proof-end=\"{endPos}\""
+
+private def proofStartMarker
+    (goals : Array (Highlighted.Goal Highlighted))
+    (startPos endPos : Nat) : String :=
+  let json := Json.compress (.arr (goals.map goalToJson))
+  let markerClass := if goals.isEmpty then "lean-proof-start" else "lean-proof-start lean-goal-marker"
+  s!"<span class=\"{markerClass}\"{proofRangeMetadata startPos endPos} data-goals=\"{escapeHtml json}\" tabindex=\"0\"></span>"
+
+private def proofEndMarker (startPos endPos : Nat) : String :=
+  s!"<span class=\"lean-proof-end\"{proofRangeMetadata startPos endPos}></span>"
 
 private partial def renderHighlighted : Highlighted → String × String
   | .token tok => renderToken tok
@@ -66,7 +119,9 @@ private partial def renderHighlighted : Highlighted → String × String
   | .unparsed s => (s!"<span class=\"lean-token unknown\">{escapeHtml s}</span>", s)
   | .point _ _ => ("", "")
   | .span _ content => renderHighlighted content
-  | .tactics _ _ _ content => renderHighlighted content
+  | .tactics goals startPos endPos content =>
+      let (html, text) := renderHighlighted content
+      (proofStartMarker goals startPos endPos ++ html ++ proofEndMarker startPos endPos, text)
   | .seq highlights =>
       highlights.foldl
         (fun (html, text) h =>
