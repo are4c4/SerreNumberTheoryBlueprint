@@ -126,7 +126,7 @@ theorem myFrobenius_apply (x : K) :
 -/
 theorem myFrobenius_injective :
     Function.Injective (myFrobenius K p) := by
-  exact (myFrobenius K p).injective
+  exact (myFrobenius K p).injective -- ?なぜ通る？
 
 end RingHom
 
