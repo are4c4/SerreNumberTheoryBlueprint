@@ -2,26 +2,30 @@
 .lean-token[data-docs],
 .lean-token[data-const-name] {
   cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
 }
 
 .lean-goal-marker {
   display: inline-block;
   position: relative;
-  width: 0;
+  width: 1.15em;
   height: 1em;
+  margin-right: .05em;
   vertical-align: baseline;
   outline: none;
+  cursor: pointer;
 }
 
 .lean-goal-marker::before {
   content: "⊢";
   position: absolute;
-  right: .35em;
+  left: 0;
   top: 0;
   color: #858585;
   font-weight: 700;
   cursor: pointer;
-  opacity: .7;
+  opacity: .85;
 }
 
 .lean-goal-marker:hover::before,
