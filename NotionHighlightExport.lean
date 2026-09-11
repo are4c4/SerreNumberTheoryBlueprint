@@ -100,12 +100,18 @@ private def goalToJson (goal : Highlighted.Goal Highlighted) : Json :=
     ("conclusion", toJson (plainHighlighted goal.conclusion))
   ]
 
-private def goalMarker (goals : Array (Highlighted.Goal Highlighted)) : String :=
-  if goals.isEmpty then
-    ""
-  else
-    let json := Json.compress (.arr (goals.map goalToJson))
-    s!"<span class=\"lean-goal-marker\" data-goals=\"{escapeHtml json}\" title=\"このタクティク開始時のゴールを表示\" tabindex=\"0\"></span>"
+private def proofRangeMetadata (startPos endPos : Nat) : String :=
+  s!" data-proof-start=\"{startPos}\" data-proof-end=\"{endPos}\""
+
+private def proofStartMarker
+    (goals : Array (Highlighted.Goal Highlighted))
+    (startPos endPos : Nat) : String :=
+  let json := Json.compress (.arr (goals.map goalToJson))
+  let markerClass := if goals.isEmpty then "lean-proof-start" else "lean-proof-start lean-goal-marker"
+  s!"<span class=\"{markerClass}\"{proofRangeMetadata startPos endPos} data-goals=\"{escapeHtml json}\" tabindex=\"0\"></span>"
+
+private def proofEndMarker (startPos endPos : Nat) : String :=
+  s!"<span class=\"lean-proof-end\"{proofRangeMetadata startPos endPos}></span>"
 
 private partial def renderHighlighted : Highlighted → String × String
   | .token tok => renderToken tok
@@ -113,9 +119,9 @@ private partial def renderHighlighted : Highlighted → String × String
   | .unparsed s => (s!"<span class=\"lean-token unknown\">{escapeHtml s}</span>", s)
   | .point _ _ => ("", "")
   | .span _ content => renderHighlighted content
-  | .tactics goals _ _ content =>
+  | .tactics goals startPos endPos content =>
       let (html, text) := renderHighlighted content
-      (goalMarker goals ++ html, text)
+      (proofStartMarker goals startPos endPos ++ html ++ proofEndMarker startPos endPos, text)
   | .seq highlights =>
       highlights.foldl
         (fun (html, text) h =>
