@@ -1,5 +1,5 @@
 import { escapeHtml } from "./lib/html.mjs";
-import { bracketDepthClass, highlightLeanDocCommentLine, syntaxHighlightLeanLine } from "./lib/highlight.mjs";
+import { bracketDepthClass, syntaxHighlightLeanLine } from "./lib/highlight.mjs";
 import { getBuildVersion, getJson } from "./lib/data.mjs";
 import { displayKind, githubUrl, resolveItem } from "./lib/manifest.mjs";
 import { proofStateForItem, renderProofGutterRows } from "./lib/proof.mjs";
@@ -31,7 +31,8 @@ function classifyLeanToken(token) {
   const constantLike = isConstantLikeToken(token, semantic);
   if (constantLike) token.classList.add("constant-like");
   if (constantLike && token.dataset.definitionSite === "true") token.classList.add("definition-site");
-  if (constantLike && qualifiedIdentifierPattern.test(text)) {
+  const hasTextMateHighlight = Boolean(token.querySelector(".tm-token"));
+  if (constantLike && qualifiedIdentifierPattern.test(text) && !hasTextMateHighlight) {
     const lastDot = text.lastIndexOf(".");
     const prefix = document.createElement("span");
     prefix.className = "lean-qualified-prefix";
@@ -62,7 +63,7 @@ function improveLeanTokenHtml(html, bracketState) {
 
 function rowHtml(row, bracketState) {
   const rendered = String(row.html || "");
-  const html = rendered.includes("lean-token") ? rendered : syntaxHighlightLeanLine(row.text || "");
+  const html = rendered.includes("lean-token") || rendered.includes("tm-token") ? rendered : syntaxHighlightLeanLine(row.text || "");
   return improveLeanTokenHtml(html, bracketState);
 }
 
@@ -104,9 +105,7 @@ function renderCodeRows(rows) {
     const classes = [];
     if (row.context) classes.push("context-line");
     if (isDocComment) classes.push("doc-comment-line");
-    const rendered = isDocComment
-      ? highlightLeanDocCommentLine(text)
-      : rowHtml(row, bracketState);
+    const rendered = rowHtml(row, bracketState);
     const line = classes.length ? '<span class="' + classes.join(" ") + '">' + rendered + "</span>" : rendered;
     if (isDocComment && trimmed.endsWith("-/")) inDocComment = false;
     return line;
