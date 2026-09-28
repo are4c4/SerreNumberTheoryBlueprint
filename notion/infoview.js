@@ -31,12 +31,9 @@
   body.className = 'lean-infoview-body';
   panel.append(head, body);
 
-  let fixedGoalLocked = false;
-
   close.addEventListener('click', () => {
     panel.hidden = true;
-    lastFollowMarker = null;
-    fixedGoalLocked = false;
+    lastGoalMarker = null;
   });
 
   const selector = '.lean-token[data-signature],.lean-token[data-docs],.lean-token[data-const-name]';
@@ -59,7 +56,6 @@
   };
 
   function showToken(target) {
-    fixedGoalLocked = false;
     kind.textContent = target.dataset.semantic || 'info';
     title.textContent = decodeMeta(target.dataset.constName || target.textContent.trim());
     body.replaceChildren();
@@ -76,8 +72,7 @@
     panel.hidden = false;
   }
 
-  function showGoals(marker, sourceLabel = 'Proof state', mode = 'fixed') {
-    fixedGoalLocked = mode === 'fixed';
+  function showGoals(marker, sourceLabel = 'カーソル位置の証明状態') {
     let goals = [];
     try { goals = JSON.parse(marker.dataset.goals || '[]'); } catch {}
     kind.textContent = 'Goal';
@@ -85,7 +80,7 @@
     body.replaceChildren();
     if (!goals.length) {
       pre('ゴールはありません．');
-      panel.dataset.mode = mode;
+      panel.dataset.mode = 'fixed';
       panel.hidden = false;
       return;
     }
@@ -111,7 +106,7 @@
       block.appendChild(conclusion);
       body.appendChild(block);
     });
-    panel.dataset.mode = mode;
+    panel.dataset.mode = 'fixed';
     panel.hidden = false;
   }
 
@@ -195,31 +190,22 @@
 
   stripNativeTitles();
   const codeWrap = document.querySelector('.code-wrap');
-  const codePre = document.querySelector('.code-pre');
   if (codeWrap) {
     new MutationObserver(() => stripNativeTitles(codeWrap)).observe(codeWrap, { childList: true, subtree: true });
   }
 
   let hovered = null;
-  let lastFollowMarker = null;
-  let followFrame = 0;
-  let followPoint = null;
+  let lastGoalMarker = null;
 
-  function scheduleProofFollow(event) {
-    if (fixedGoalLocked && !panel.hidden && panel.dataset.mode === 'fixed') return;
+  function showGoalsFromPoint(event, sourceLabel = 'クリック位置の証明状態') {
     const activeCodePre = document.querySelector('.code-pre');
-    if (!activeCodePre || !activeCodePre.contains(event.target)) return;
-    followPoint = { x: event.clientX, y: event.clientY };
-    if (followFrame) return;
-    followFrame = requestAnimationFrame(() => {
-      followFrame = 0;
-      if (!followPoint) return;
-      const marker = proofMarkerAtPoint(followPoint.x, followPoint.y);
-      followPoint = null;
-      if (!marker || marker === lastFollowMarker) return;
-      lastFollowMarker = marker;
-      showGoals(marker, 'カーソル位置の証明状態', 'follow');
-    });
+    if (!activeCodePre || !activeCodePre.contains(event.target)) return false;
+    const marker = proofMarkerAtPoint(event.clientX, event.clientY);
+    if (!marker) return false;
+    event.preventDefault();
+    lastGoalMarker = marker;
+    showGoals(marker, sourceLabel);
+    return true;
   }
 
   document.addEventListener('mouseover', event => {
@@ -231,7 +217,7 @@
     const signature = target.dataset.signature ? decodeMeta(target.dataset.signature) : '';
     const docs = target.dataset.docs ? decodeMeta(target.dataset.docs) : '';
     const proofHint = target.matches(tacticSelector) && nearestGoalMarker(target)
-      ? 'カーソルを証明内で動かすと証明状態が追従します．クリックで固定し，×で固定を解除できます．'
+      ? 'クリックするとこの位置の証明状態を固定表示します．マウス移動では切り替わりません．'
       : '';
     tooltip.textContent = [name, signature, docs, proofHint].filter(Boolean).join('\n\n');
     tooltip.hidden = false;
@@ -243,7 +229,6 @@
       tooltip.style.left = `${x}px`;
       tooltip.style.top = `${y}px`;
     }
-    scheduleProofFollow(event);
   });
   document.addEventListener('mouseout', event => {
     if (!hovered) return;
@@ -255,8 +240,8 @@
     const marker = event.target.closest?.('.lean-goal-marker');
     if (marker) {
       event.preventDefault();
-      lastFollowMarker = marker;
-      showGoals(marker, 'クリック位置の証明状態', 'fixed');
+      lastGoalMarker = marker;
+      showGoals(marker, 'クリック位置の証明状態');
       return;
     }
     const tactic = event.target.closest?.(tacticSelector);
@@ -264,20 +249,21 @@
       const proofMarker = proofMarkerAtPoint(event.clientX, event.clientY) || nearestGoalMarker(tactic);
       if (proofMarker) {
         event.preventDefault();
-        lastFollowMarker = proofMarker;
-        showGoals(proofMarker, `${tactic.textContent.trim()} の証明状態`, 'fixed');
+        lastGoalMarker = proofMarker;
+        showGoals(proofMarker, `${tactic.textContent.trim()} の証明状態`);
         return;
       }
     }
     const target = event.target.closest?.(selector);
-    if (target) { event.preventDefault(); showToken(target); }
+    if (target) { event.preventDefault(); showToken(target); return; }
+    showGoalsFromPoint(event);
   });
   document.addEventListener('keydown', event => {
     if (!['Enter', ' '].includes(event.key)) return;
     const marker = event.target.closest?.('.lean-goal-marker');
     if (!marker) return;
     event.preventDefault();
-    lastFollowMarker = marker;
-    showGoals(marker, 'キーボード選択位置の証明状態', 'fixed');
+    lastGoalMarker = marker;
+    showGoals(marker, 'キーボード選択位置の証明状態');
   });
 })();
