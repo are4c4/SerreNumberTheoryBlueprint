@@ -138,11 +138,14 @@ def main() -> int:
     parser.add_argument("--semantic-root", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--source-root", default=".")
+    parser.add_argument("--config", required=True)
     args = parser.parse_args()
 
     semantic_root = Path(args.semantic_root)
     output = Path(args.output)
     source_root = Path(args.source_root)
+    config = json.loads(Path(args.config).read_text(encoding="utf-8"))
+    source_prefixes = [str(x) for x in config.get("sourcePrefixes", [])]
     output.joinpath("data").mkdir(parents=True, exist_ok=True)
 
     items: dict[str, dict] = {}
@@ -153,6 +156,9 @@ def main() -> int:
     semantic_files = sorted(semantic_root.rglob("*.json"))
     for semantic_file in semantic_files:
         rel_source = source_path_from_semantic(semantic_file, semantic_root)
+        rel_source_text = str(rel_source)
+        if source_prefixes and not any(rel_source_text.startswith(prefix) for prefix in source_prefixes):
+            continue
         source_file = source_root / rel_source
         if not source_file.exists():
             continue
@@ -192,6 +198,8 @@ def main() -> int:
     manifest = {
         "schemaVersion": 2,
         "generator": "notion-viewer-v2",
+        "siteTitle": str(config.get("siteTitle", "Lean Notion Viewer")),
+        "sourcePrefixes": source_prefixes,
         "github": {
             "repository": github_repository(),
             "ref": source_ref(),
