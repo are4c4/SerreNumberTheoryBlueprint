@@ -18,7 +18,7 @@ Lean source
                     Notion embed
 ```
 
-通常のソース色は `vscode-textmate` + `vscode-oniguruma` でビルド時に生成します。`lib/highlight.mjs` の独自 tokenizer は、生成済み HTML がない場合だけ使うフォールバックです。
+通常のソース色は `vscode-textmate` + `vscode-oniguruma` でビルド時に生成します。Lean の `/-- ... -/` doc comment では公式 `source.lean4.markdown` grammar も読み込み、バッククォートで囲まれた inline code などを VS Code と同じ TextMate scope で処理します。`lib/highlight.mjs` の独自 tokenizer は、生成済み HTML がない場合だけ使うフォールバックです。
 
 ## URL
 
@@ -58,7 +58,7 @@ Viewer はフレームワークを使わない ES Modules と静的 CSS で構�
 - `lib/manifest.mjs`: URL と manifest の解決
 - `lib/highlight.mjs`: 生成済み VS Code highlighting がない場合のフォールバック強調
 - `../scripts/apply-vscode-highlighting.mjs`: 公式 grammar・Dark+・SubVerso metadata の合成
-- `vendor/`: バージョン固定した Lean grammar / VS Code theme
+- `vendor/`: バージョン固定した Lean grammar / Lean doc-comment Markdown grammar / VS Code theme
 - `lib/proof.mjs`: proof status と gutter
 - `lib/data.mjs`: 静的 JSON の取得
 

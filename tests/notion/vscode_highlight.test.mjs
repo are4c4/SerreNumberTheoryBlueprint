@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  createHighlighter,
   mergeSemanticAndTextMate,
   parseJsonc,
   renderTextMateLine,
@@ -57,4 +58,19 @@ test("proof markers survive TextMate overlay", () => {
   assert.match(html, /lean-goal-marker/);
   assert.match(html, /lean-proof-end/);
   assert.match(html, /tm-token/);
+});
+
+test("Lean doc comments use the official nested Markdown grammar", async () => {
+  const highlighter = await createHighlighter({
+    grammarPath: "notion/vendor/lean4.json",
+    markdownGrammarPath: "notion/vendor/lean4-markdown.json",
+    themePath: "notion/vendor/dark_plus.json",
+  });
+  const [segments] = highlighter.tokenizeSnippet("/-- `0` を返す。 -/");
+  const inlineCode = segments.filter(segment => segment.text.includes("0") || segment.text.includes("`"));
+  assert.ok(inlineCode.length > 0, "inline code token was not produced");
+  assert.ok(
+    inlineCode.some(segment => segment.color.toLowerCase() === "#ce9178"),
+    "VS Code Dark+ inline-code color was not applied inside the doc comment",
+  );
 });
