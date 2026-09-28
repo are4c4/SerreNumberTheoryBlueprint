@@ -4,10 +4,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-import * as vsctm from "vscode-textmate";
-import * as oniguruma from "vscode-oniguruma";
-
 const require = createRequire(import.meta.url);
+const vsctm = require("vscode-textmate");
+const oniguruma = require("vscode-oniguruma");
 
 const FONT_STYLE_MASK = 0x00007800;
 const FOREGROUND_MASK = 0x00ff8000;
