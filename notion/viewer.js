@@ -237,6 +237,26 @@
     codePre.addEventListener('click', () => codePre.focus({preventScroll: true}));
   }
 
+  function renderCodeRows(rows) {
+    let inDocComment = false;
+    return rows.map(row => {
+      const text = String(row.text || '');
+      const trimmed = text.trim();
+      const startsDocComment = trimmed.startsWith('/--') || trimmed.startsWith('/-!');
+      const isDocComment = inDocComment || startsDocComment;
+      if (startsDocComment) inDocComment = true;
+
+      const rendered = rowHtml(row);
+      const classes = [];
+      if (row.context) classes.push('context-line');
+      if (isDocComment) classes.push('doc-comment-line');
+      const line = classes.length ? `<span class="${classes.join(' ')}">${rendered}</span>` : rendered;
+
+      if (isDocComment && trimmed.endsWith('-/')) inDocComment = false;
+      return line;
+    }).join('\n');
+  }
+
   function render(item, manifest, statuses) {
     fileName.textContent = item.file;
     targetRow.hidden = false;
@@ -256,10 +276,7 @@
     const rows = item.rows || [];
     displayedCode = item.plainText || rows.map(r => r.text || '').join('\n');
     copyBtn.disabled = false;
-    codeWrap.innerHTML = `<div class="code-grid"><pre class="line-nos">${rows.map(r => r.line ?? '').join('\n')}</pre><pre class="code-pre" tabindex="0" contenteditable="plaintext-only" spellcheck="false" aria-label="Lean source code">${rows.map(r => {
-      const rendered = rowHtml(r);
-      return r.context ? `<span class="context-line">${rendered}</span>` : rendered;
-    }).join('\n')}</pre></div>`;
+    codeWrap.innerHTML = `<div class="code-grid"><pre class="line-nos">${rows.map(r => r.line ?? '').join('\n')}</pre><pre class="code-pre" tabindex="0" contenteditable="plaintext-only" spellcheck="false" aria-label="Lean source code">${renderCodeRows(rows)}</pre></div>`;
     lockReadonlyCaret(codeWrap.querySelector('.code-pre'));
   }
 
