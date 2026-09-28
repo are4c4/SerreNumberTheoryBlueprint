@@ -45,11 +45,26 @@ jobs:
         run: |
           cp lake-manifest.json "$RUNNER_TEMP/lake-manifest.before.json"
           lake update
-          if ! cmp -s lake-manifest.json "$RUNNER_TEMP/lake-manifest.before.json"; then
-            echo "::error::lake-manifest.json is out of date. Run 'lake update' and commit the result."
-            diff -u "$RUNNER_TEMP/lake-manifest.before.json" lake-manifest.json || true
-            exit 1
-          fi
+          python3 - "$RUNNER_TEMP/lake-manifest.before.json" lake-manifest.json <<'PY'
+          import json
+          import sys
+
+          def normalized(path):
+              with open(path, encoding="utf-8") as f:
+                  data = json.load(f)
+              data["packages"] = sorted(data.get("packages", []), key=lambda p: p.get("name", ""))
+              return data
+
+          before = normalized(sys.argv[1])
+          after = normalized(sys.argv[2])
+          if before != after:
+              print("::error::lake-manifest.json has a semantic dependency change.")
+              print("Before:")
+              print(json.dumps(before, indent=2, ensure_ascii=False))
+              print("After:")
+              print(json.dumps(after, indent=2, ensure_ascii=False))
+              raise SystemExit(1)
+          PY
 
       - name: Restore Lean build cache
         uses: actions/cache@v5
