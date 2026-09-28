@@ -93,6 +93,33 @@ def doc_start(lines: list[str], declaration_start: int) -> int:
     return start + 1
 
 
+def declaration_line(
+    lines: list[str],
+    start: int,
+    end: int,
+    display_kind: str | None,
+) -> int:
+    """Return the source line containing the actual declaration keyword.
+
+    SubVerso item ranges can begin at an attached doc comment, so startLine is
+    not necessarily the theorem/lemma/def line.  Keep that range intact for
+    display, but record the declaration line separately for gutter decorations.
+    """
+    kind = str(display_kind or "").strip()
+    if not kind:
+        return start
+
+    declaration_re = re.compile(
+        rf"^\s*(?:@\[[^\]]*\]\s*)*"
+        rf"(?:(?:noncomputable|private|protected|local|unsafe|partial)\s+)*"
+        rf"{re.escape(kind)}\b"
+    )
+    for line_no in range(start, end + 1):
+        if 0 <= line_no - 1 < len(lines) and declaration_re.match(lines[line_no - 1]):
+            return line_no
+    return start
+
+
 def split_semantic(item: dict) -> tuple[list[str], list[str]]:
     return str(item.get("text", "")).split("\n"), str(item.get("html", "")).split("\n")
 
@@ -345,6 +372,7 @@ def main() -> int:
             defines = [str(x) for x in raw.get("defines", [])]
             scopes, variables = scope_and_variables(lines, start)
             rows, plain_text = make_rows(lines, raw, variables)
+            decl_line = declaration_line(lines, start, end, raw.get("displayKind"))
             item_id = f"{module}:{index}"
             item = {
                 "id": item_id,
@@ -355,6 +383,7 @@ def main() -> int:
                 "defines": defines,
                 "primaryDeclaration": defines[0] if defines else None,
                 "startLine": start,
+                "declarationLine": decl_line,
                 "endLine": end,
                 "scopes": scopes,
                 "rows": rows,

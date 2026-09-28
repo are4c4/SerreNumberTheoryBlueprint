@@ -25,6 +25,24 @@ class BuildNotionTests(unittest.TestCase):
         lines = ["/-- docs -/", "theorem demo : True := by", "  trivial"]
         self.assertEqual(build.doc_start(lines, 2), 1)
 
+    def test_declaration_line_skips_attached_doc_comment(self):
+        lines = [
+            "/--",
+            "docs",
+            "-/",
+            "private theorem demo : True := by",
+            "  trivial",
+        ]
+        self.assertEqual(build.declaration_line(lines, 1, 5, "theorem"), 4)
+
+    def test_declaration_line_handles_attributes_and_modifiers(self):
+        lines = [
+            "/-- docs -/",
+            "@[simp] protected theorem demo : True := by",
+            "  trivial",
+        ]
+        self.assertEqual(build.declaration_line(lines, 1, 3, "theorem"), 2)
+
     def test_semantic_rows_align_after_whitespace_normalization(self):
         lines = ["theorem demo : True := by", "  trivial"]
         item = {
