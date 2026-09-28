@@ -72,7 +72,7 @@ pre{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1
 .lean-token.type-like,.lean-token.sort{color:var(--type)!important;font-weight:400}
 .lean-token.literal,.lean-token.number,.lean-token.semantic-number{color:var(--literal)!important}
 .lean-token.comment,.lean-token.doc-comment,.lean-token.semantic-comment,.lean-token.semantic-doc-comment{color:var(--comment)!important;font-style:normal!important}
-.lean-token.declaration,.lean-token.definition-site,.lean-token.qualified-const.definition-site .lean-qualified-member{color:var(--decl)!important;font-weight:500}
+.lean-token.declaration,.lean-token.definition-site,.lean-token.qualified-const.definition-site .lean-qualified-member{color:var(--decl)!important;font-weight:400}
 @media (min-width:900px){
   .meta-block{display:grid;grid-template-columns:78px minmax(0,1fr);align-items:center;column-gap:10px}
   .meta-label{margin-bottom:0}
