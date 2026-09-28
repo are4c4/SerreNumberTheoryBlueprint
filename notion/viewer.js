@@ -167,6 +167,24 @@
     return `https://github.com/${repo}/blob/${encodeURIComponent(ref)}/${item.file}#L${item.startLine}`;
   }
 
+  function lockReadonlyCaret(codePre) {
+    if (!codePre) return;
+    const allowedKeys = new Set([
+      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+      'Home', 'End', 'PageUp', 'PageDown',
+      'Shift', 'Control', 'Alt', 'Meta', 'Escape', 'Tab'
+    ]);
+    codePre.addEventListener('beforeinput', event => event.preventDefault());
+    codePre.addEventListener('paste', event => event.preventDefault());
+    codePre.addEventListener('drop', event => event.preventDefault());
+    codePre.addEventListener('keydown', event => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (allowedKeys.has(event.key)) return;
+      event.preventDefault();
+    });
+    codePre.addEventListener('click', () => codePre.focus({preventScroll: true}));
+  }
+
   function render(item, manifest, statuses) {
     fileName.textContent = item.file;
     targetRow.hidden = false;
@@ -186,10 +204,11 @@
     const rows = item.rows || [];
     displayedCode = item.plainText || rows.map(r => r.text || '').join('\n');
     copyBtn.disabled = false;
-    codeWrap.innerHTML = `<div class="code-grid"><pre class="line-nos">${rows.map(r => r.line ?? '').join('\n')}</pre><pre class="code-pre">${rows.map(r => {
+    codeWrap.innerHTML = `<div class="code-grid"><pre class="line-nos">${rows.map(r => r.line ?? '').join('\n')}</pre><pre class="code-pre" tabindex="0" contenteditable="plaintext-only" spellcheck="false" aria-label="Lean source code">${rows.map(r => {
       const rendered = rowHtml(r);
       return r.context ? `<span class="context-line">${rendered}</span>` : rendered;
     }).join('\n')}</pre></div>`;
+    lockReadonlyCaret(codeWrap.querySelector('.code-pre'));
   }
 
   async function load() {
