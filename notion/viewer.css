@@ -9,8 +9,6 @@
   --decl:#dcdcaa;
   --fn:#dcdcaa;
   --type:#4ec9b0;
-  --member:#d7ba7d;
-  --var:#d4d4d4;
   --literal:#b5cea8;
   --comment:#6a9955;
   --selection:#264f78;
@@ -51,17 +49,11 @@ pre{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1
 .lean-token{border-radius:2px;text-decoration:none;color:inherit}
 .lean-token.keyword,.lean-token.built-in{color:var(--keyword);font-weight:600}
 .lean-token.declaration,.lean-token.definition-site{color:var(--decl)!important;font-weight:650}
-.lean-token.function-like,.lean-token.const,.lean-token.option,.lean-token.semantic-const,.lean-token.semantic-constructor,.lean-token.constant-like{color:var(--decl)!important}
-.lean-token.predicate-like,.lean-token.type-like,.lean-token.sort,.lean-token.type-const{color:var(--type)!important}
-.lean-token.member-like{color:var(--member)!important}
-.lean-token.var,.lean-token.variable-token,.lean-token.wildcard,.lean-token.typed{color:var(--var)!important}
+.lean-token.type-like,.lean-token.sort{color:var(--type)!important}
 .lean-token.literal,.lean-token.number,.lean-token.semantic-number{color:var(--literal)!important}
 .lean-token.comment,.lean-token.doc-comment,.lean-token.semantic-comment,.lean-token.semantic-doc-comment{color:var(--comment)!important;font-style:italic}
-.lean-token.operator,.lean-token.separator,.lean-token.bracket,.lean-token.delimiter{color:#d4d4d4!important}
-.lean-token.qualified-const{color:inherit!important}
-.lean-qualified-prefix{color:var(--type)!important}
-.lean-qualified-dot{color:var(--muted)!important}
-.lean-qualified-member{color:var(--decl)!important}
+.lean-token.var,.lean-token.variable-token,.lean-token.wildcard,.lean-token.typed,.lean-token.function-like,.lean-token.const,.lean-token.option,.lean-token.semantic-const,.lean-token.semantic-constructor,.lean-token.constant-like,.lean-token.predicate-like,.lean-token.member-like,.lean-token.type-const,.lean-token.operator,.lean-token.separator,.lean-token.bracket,.lean-token.delimiter,.lean-token.qualified-const{color:var(--text)!important}
+.lean-qualified-prefix,.lean-qualified-dot,.lean-qualified-member{color:var(--text)!important}
 .lean-token.qualified-const.definition-site .lean-qualified-member{color:var(--decl)!important}
 @media (max-width:700px){
   body{padding:0}
