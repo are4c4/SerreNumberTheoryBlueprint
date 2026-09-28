@@ -31,16 +31,6 @@ jobs:
           curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Verify dependency manifest
-        run: |
-          cp lake-manifest.json "$RUNNER_TEMP/lake-manifest.before.json"
-          lake update
-          if ! cmp -s lake-manifest.json "$RUNNER_TEMP/lake-manifest.before.json"; then
-            echo "::error::lake-manifest.json is out of date. Run 'lake update' and commit the result."
-            diff -u "$RUNNER_TEMP/lake-manifest.before.json" lake-manifest.json || true
-            exit 1
-          fi
-
       - name: Restore Lake package cache
         id: lake-package-cache
         uses: actions/cache@v5
@@ -50,6 +40,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-lake-packages-notion-
             ${{ runner.os }}-lake-packages-v3-
+
+      - name: Verify dependency manifest
+        run: |
+          cp lake-manifest.json "$RUNNER_TEMP/lake-manifest.before.json"
+          lake update
+          if ! cmp -s lake-manifest.json "$RUNNER_TEMP/lake-manifest.before.json"; then
+            echo "::error::lake-manifest.json is out of date. Run 'lake update' and commit the result."
+            diff -u "$RUNNER_TEMP/lake-manifest.before.json" lake-manifest.json || true
+            exit 1
+          fi
 
       - name: Restore Lean build cache
         uses: actions/cache@v5
