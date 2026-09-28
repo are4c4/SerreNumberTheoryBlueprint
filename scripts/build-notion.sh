@@ -31,6 +31,7 @@ cp notion/viewer.css "$OUT/viewer.css"
 cp notion/viewer.js "$OUT/viewer.js"
 cp notion/infoview.css "$OUT/infoview.css"
 cp notion/infoview.js "$OUT/infoview.js"
+cp notion/gutter.css "$OUT/gutter.css"
 cp notion/link/index.html "$OUT/link/index.html"
 cp notion/link/link.css "$OUT/link/link.css"
 cp notion/link/link.js "$OUT/link/link.js"
@@ -38,9 +39,27 @@ cp notion/link/link.js "$OUT/link/link.js"
 printf '{"commit":"%s"}\n' "${GITHUB_SHA:-local}" > "$OUT/build-version.json"
 
 test -s "$OUT/index.html"
+test -s "$OUT/gutter.css"
 test -s "$OUT/data/manifest.json"
 test -s "$OUT/proof-status.json"
 test -s "$OUT/link/index.html"
+
+python3 - "$OUT" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+out = Path(sys.argv[1])
+index = out.joinpath("index.html").read_text(encoding="utf-8")
+assets = {
+    ref.split("?", 1)[0]
+    for ref in re.findall(r'(?:href|src)="([^"]+)"', index)
+    if ref and not ref.startswith(("http://", "https://", "#"))
+}
+missing = sorted(asset for asset in assets if not out.joinpath(asset).is_file())
+if missing:
+    raise SystemExit(f"Notion Viewer is missing referenced assets: {missing}")
+PY
 
 python3 - "$OUT/data/manifest.json" <<'PY'
 import json
