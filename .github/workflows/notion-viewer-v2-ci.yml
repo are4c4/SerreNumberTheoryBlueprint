@@ -36,6 +36,14 @@ jobs:
             ${{ runner.os }}-lake-packages-v3-
             ${{ runner.os }}-lake-packages-v2-
 
+      - name: Restore Lean build cache
+        uses: actions/cache@v5
+        with:
+          path: .lake/build
+          key: ${{ runner.os }}-notion-v2-build-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'lakefile.lean', 'SerreNumberTheory.lean', 'SerreNumberTheory/**/*.lean', 'NotionHighlightExport.lean', 'NotionProofStatusExport.lean', 'scripts/build-notion-v2.*') }}
+          restore-keys: |
+            ${{ runner.os }}-notion-v2-build-
+
       - if: ${{ steps.lake-package-cache.outputs.cache-hit != 'true' }}
         name: Warm mathlib cache
         timeout-minutes: 20
