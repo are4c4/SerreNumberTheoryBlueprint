@@ -99,7 +99,13 @@
     return (statuses.theorems || []).find(t => names.includes(t.name)) || null;
   }
 
-  function inlineProofMarker(proofState) {
+  function theoremStartRow(row) {
+    if (row.context) return false;
+    const trimmed = String(row.text || '').trim();
+    return /^(?:(?:noncomputable|private|protected|unsafe|partial)\s+)*(theorem|lemma)\b/.test(trimmed);
+  }
+
+  function proofGutterMarker(proofState) {
     if (!proofState) return '';
     const proved = proofState.status === 'proved';
     const className = proved ? 'proved' : 'incomplete';
@@ -108,22 +114,18 @@
       : 'Incomplete: this theorem transitively depends on sorryAx.';
     const symbol = proved ? '✓' : '!';
     const label = proved ? 'Proved' : 'Incomplete';
-    return `<span class="inline-proof-status ${className}" title="${esc(title)}" aria-label="${esc(label)}">${symbol}</span>`;
+    return `<span class="proof-gutter-marker ${className}" title="${esc(title)}" aria-label="${esc(label)}">${symbol}</span>`;
   }
 
-  function addInlineProofMarker(html, proofState) {
-    const marker = inlineProofMarker(proofState);
-    if (!marker) return html;
-    const template = document.createElement('template');
-    template.innerHTML = html;
-    const target = template.content.querySelector('.definition-site, .lean-token.declaration');
-    const markerTemplate = document.createElement('template');
-    markerTemplate.innerHTML = marker;
-    if (target) {
-      target.after(document.createTextNode(' '), markerTemplate.content.firstElementChild);
-      return template.innerHTML;
-    }
-    return `${html} ${marker}`;
+  function renderProofGutterRows(rows, proofState) {
+    let proofMarkerRendered = false;
+    return rows.map(row => {
+      if (proofState && !proofMarkerRendered && theoremStartRow(row)) {
+        proofMarkerRendered = true;
+        return proofGutterMarker(proofState);
+      }
+      return '<span class="proof-gutter-spacer" aria-hidden="true"></span>';
+    }).join('\n');
   }
 
   async function getJson(path) {
@@ -258,9 +260,8 @@
     codePre.addEventListener('click', () => codePre.focus({preventScroll: true}));
   }
 
-  function renderCodeRows(rows, proofState) {
+  function renderCodeRows(rows) {
     let inDocComment = false;
-    let proofMarkerRendered = false;
     return rows.map(row => {
       const text = String(row.text || '');
       const trimmed = text.trim();
@@ -268,16 +269,7 @@
       const isDocComment = inDocComment || startsDocComment;
       if (startsDocComment) inDocComment = true;
 
-      let rendered = rowHtml(row);
-      const shouldRenderProofMarker = proofState
-        && !proofMarkerRendered
-        && !row.context
-        && /^(?:(?:noncomputable|private|protected|unsafe|partial)\s+)*(theorem|lemma)\b/.test(trimmed);
-      if (shouldRenderProofMarker) {
-        rendered = addInlineProofMarker(rendered, proofState);
-        proofMarkerRendered = true;
-      }
-
+      const rendered = rowHtml(row);
       const classes = [];
       if (row.context) classes.push('context-line');
       if (isDocComment) classes.push('doc-comment-line');
@@ -308,7 +300,7 @@
     const proofState = proofStateForItem(item, statuses);
     displayedCode = item.plainText || rows.map(r => r.text || '').join('\n');
     copyBtn.disabled = false;
-    codeWrap.innerHTML = `<div class="code-grid"><pre class="line-nos">${rows.map(r => r.line ?? '').join('\n')}</pre><pre class="code-pre" tabindex="0" contenteditable="plaintext-only" spellcheck="false" aria-label="Lean source code">${renderCodeRows(rows, proofState)}</pre></div>`;
+    codeWrap.innerHTML = `<div class="code-grid"><pre class="proof-gutter" aria-hidden="true">${renderProofGutterRows(rows, proofState)}</pre><pre class="line-nos">${rows.map(r => r.line ?? '').join('\n')}</pre><pre class="code-pre" tabindex="0" contenteditable="plaintext-only" spellcheck="false" aria-label="Lean source code">${renderCodeRows(rows)}</pre></div>`;
     lockReadonlyCaret(codeWrap.querySelector('.code-pre'));
   }
 
