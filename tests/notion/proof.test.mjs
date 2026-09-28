@@ -20,3 +20,9 @@ test("proof marker uses item.startLine rather than reparsing Lean text", () => {
   assert.doesNotMatch(cells[0], /proof-gutter-marker/);
   assert.doesNotMatch(cells[1], /proof-gutter-marker/);
 });
+
+test("proved gutter marker uses the compact VS Code-style double check", () => {
+  const cells = proofGutterCells({startLine:10}, [{line:10}], {status:"proved"});
+  assert.match(cells[0], /<svg/);
+  assert.equal((cells[0].match(/<path /g) || []).length, 2);
+});

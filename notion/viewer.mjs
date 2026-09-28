@@ -1,5 +1,5 @@
 import { escapeHtml } from "./lib/html.mjs";
-import { syntaxHighlightLeanLine } from "./lib/highlight.mjs";
+import { bracketDepthClass, highlightLeanDocCommentLine, syntaxHighlightLeanLine } from "./lib/highlight.mjs";
 import { getBuildVersion, getJson } from "./lib/data.mjs";
 import { displayKind, githubUrl, resolveItem } from "./lib/manifest.mjs";
 import { proofStateForItem, renderProofGutterRows } from "./lib/proof.mjs";
@@ -49,17 +49,21 @@ function classifyLeanToken(token) {
   if (constantLike && /^[A-ZΑ-Ω]/u.test(text)) token.classList.add("type-const");
 }
 
-function improveLeanTokenHtml(html) {
+function improveLeanTokenHtml(html, bracketState) {
   const template = document.createElement("template");
   template.innerHTML = html;
   template.content.querySelectorAll(".lean-token").forEach(classifyLeanToken);
+  template.content.querySelectorAll(".lean-token.bracket").forEach(token => {
+    const depthClass = bracketDepthClass(token.textContent || "", bracketState);
+    if (depthClass) token.classList.add(depthClass);
+  });
   return template.innerHTML;
 }
 
-function rowHtml(row) {
+function rowHtml(row, bracketState) {
   const rendered = String(row.html || "");
   const html = rendered.includes("lean-token") ? rendered : syntaxHighlightLeanLine(row.text || "");
-  return improveLeanTokenHtml(html);
+  return improveLeanTokenHtml(html, bracketState);
 }
 
 function updateScopes(scopes) {
@@ -90,6 +94,7 @@ function lockReadonlyCaret(codePre) {
 
 function renderCodeRows(rows) {
   let inDocComment = false;
+  const bracketState = {depth:0};
   return rows.map(row => {
     const text = String(row.text || "");
     const trimmed = text.trim();
@@ -99,7 +104,9 @@ function renderCodeRows(rows) {
     const classes = [];
     if (row.context) classes.push("context-line");
     if (isDocComment) classes.push("doc-comment-line");
-    const rendered = rowHtml(row);
+    const rendered = isDocComment
+      ? highlightLeanDocCommentLine(text)
+      : rowHtml(row, bracketState);
     const line = classes.length ? '<span class="' + classes.join(" ") + '">' + rendered + "</span>" : rendered;
     if (isDocComment && trimmed.endsWith("-/")) inDocComment = false;
     return line;

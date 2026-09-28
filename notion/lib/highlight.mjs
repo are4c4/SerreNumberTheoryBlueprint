@@ -5,6 +5,9 @@ const leanTypes = new Set(["Type","Prop","Sort","Nat","Int","Rat","Bool","String
 const leanLiterals = new Set(["true","false"]);
 const leanTokenPattern = /:=|=>|->|<-|≤|≥|≠|⊢|∀|∃|λ|[A-Za-z_][A-Za-z0-9_'.]*|\d+|[()[\]{}:,.^=+\-*\/|]/g;
 const punctuationPattern = /^(?::=|=>|->|<-|≤|≥|≠|⊢|∀|∃|λ|[()[\]{}:,.^=+\-*\/|])$/;
+const bracketTokens = new Set(["(", ")", "[", "]", "{", "}"]);
+const openingBrackets = new Set(["(", "[", "{"]);
+const closingBrackets = new Set([")", "]", "}"]);
 
 export function classifyLeanWord(token) {
   if (leanKeywords.has(token)) return "keyword";
@@ -37,6 +40,28 @@ export function highlightLeanText(text) {
   });
 }
 
+export function highlightLeanDocCommentLine(text) {
+  const raw = String(text ?? "");
+  let html = "";
+  let last = 0;
+  for (const match of raw.matchAll(/`[^`]*`/g)) {
+    const index = match.index ?? 0;
+    html += escapeHtml(raw.slice(last, index));
+    html += '<span class="doc-comment-code">' + escapeHtml(match[0]) + "</span>";
+    last = index + match[0].length;
+  }
+  return html + escapeHtml(raw.slice(last));
+}
+
+export function bracketDepthClass(token, state) {
+  if (!bracketTokens.has(token)) return "";
+  const holder = state || {depth:0};
+  if (closingBrackets.has(token)) holder.depth = Math.max(0, holder.depth - 1);
+  const depthClass = "bracket-depth-" + (holder.depth % 3);
+  if (openingBrackets.has(token)) holder.depth += 1;
+  return depthClass;
+}
+
 export function syntaxHighlightLeanLine(text) {
   const raw = String(text ?? "");
   if (!raw) return "";
@@ -45,6 +70,7 @@ export function syntaxHighlightLeanLine(text) {
   const comment = commentStart >= 0 ? raw.slice(commentStart) : "";
   const highlighted = mapTokens(code, token => {
     const cls = classifyLeanWord(token);
+    if (bracketTokens.has(token)) return '<span class="lean-token punctuation bracket">' + escapeHtml(token) + "</span>";
     if (cls === "keyword") return '<span class="lean-token keyword">' + escapeHtml(token) + "</span>";
     if (cls === "type") return '<span class="lean-token type-like">' + escapeHtml(token) + "</span>";
     if (cls === "literal") return '<span class="lean-token literal">' + escapeHtml(token) + "</span>";
