@@ -87,17 +87,38 @@ private partial def plainHighlighted : Highlighted → String
   | .tactics _ _ _ content => plainHighlighted content
   | .seq highlights => highlights.foldl (fun text h => text ++ plainHighlighted h) ""
 
+private def renderColorToken (tok : Token) : String :=
+  let cls := tok.kind.cssClass
+  let definitionClass :=
+    match tok.kind with
+    | .const _ _ _ isDef _ => if isDef then " definition-site" else ""
+    | _ => ""
+  s!"<span class=\"lean-token {cls}{definitionClass}\">{escapeHtml tok.content}</span>"
+
+private partial def renderColorHighlighted : Highlighted → String
+  | .token tok => renderColorToken tok
+  | .text s => escapeHtml s
+  | .unparsed s => s!"<span class=\"lean-token unknown\">{escapeHtml s}</span>"
+  | .point _ _ => ""
+  | .span _ content => renderColorHighlighted content
+  | .tactics _ _ _ content => renderColorHighlighted content
+  | .seq highlights =>
+      highlights.foldl (fun out h => out ++ renderColorHighlighted h) ""
+
 private def goalToJson (goal : Highlighted.Goal Highlighted) : Json :=
   let hypotheses := goal.hypotheses.map fun h =>
     Json.mkObj [
       ("names", toJson (h.names.map (fun tok => tok.content))),
-      ("type", toJson (plainHighlighted h.typeAndVal))
+      ("namesHtml", toJson (String.intercalate " " (h.names.toList.map renderColorToken))),
+      ("type", toJson (plainHighlighted h.typeAndVal)),
+      ("typeHtml", toJson (renderColorHighlighted h.typeAndVal))
     ]
   Json.mkObj [
     ("name", toJson goal.name),
     ("goalPrefix", toJson goal.goalPrefix),
     ("hypotheses", .arr hypotheses),
-    ("conclusion", toJson (plainHighlighted goal.conclusion))
+    ("conclusion", toJson (plainHighlighted goal.conclusion)),
+    ("conclusionHtml", toJson (renderColorHighlighted goal.conclusion))
   ]
 
 private def proofRangeMetadata (startPos endPos : Nat) : String :=

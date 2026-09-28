@@ -29,9 +29,10 @@ test("proof marker falls back to startLine for old manifests", () => {
   assert.match(cells[0], /proof-gutter-marker proved/);
 });
 
-test("proved gutter marker uses the compact VS Code-style double check", () => {
+test("proved gutter marker uses Lean VS Code's 16px double-check geometry", () => {
   const cells = proofGutterCells({startLine:10}, [{line:10}], {status:"proved"});
   assert.match(cells[0], /<svg/);
   assert.equal((cells[0].match(/<path /g) || []).length, 2);
-  assert.match(cells[0], /viewBox="0 0 24 16"/);
+  assert.match(cells[0], /viewBox="0 0 16 16"/);
+  assert.match(cells[0], /16\.211845,3\.8542521/);
 });
