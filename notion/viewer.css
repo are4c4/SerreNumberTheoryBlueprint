@@ -5,7 +5,7 @@
   --border:#3c3c3c;
   --text:#d4d4d4;
   --muted:#858585;
-  --keyword:#c586c0;
+  --keyword:#569cd6;
   --decl:#dcdcaa;
   --type:#4ec9b0;
   --literal:#b5cea8;
@@ -57,6 +57,8 @@ pre{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1
 .error,.empty{padding:18px;font:12px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace}
 .lean-token{border-radius:2px;text-decoration:none;color:inherit}
 .tm-token{border-radius:0;text-decoration:inherit}
+.lean-token.semantic-keyword>.tm-token{color:var(--keyword)!important}
+.lean-token.definition-site>.tm-token{color:var(--decl)!important}
 .lean-token.var,.lean-token.variable-token,.lean-token.wildcard,.lean-token.typed,.lean-token.function-like,.lean-token.const,.lean-token.option,.lean-token.semantic-const,.lean-token.semantic-constructor,.lean-token.constant-like,.lean-token.predicate-like,.lean-token.member-like,.lean-token.type-const,.lean-token.qualified-const,.lean-qualified-prefix,.lean-qualified-dot,.lean-qualified-member{color:var(--text)!important;font-weight:400}
 .lean-token.operator,.lean-token.separator,.lean-token.delimiter{color:var(--text)!important;font-weight:400}
 .lean-token.bracket{color:var(--bracket-1)!important;font-weight:400}
