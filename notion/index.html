@@ -4,11 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Lean Notion Viewer</title>
-<link rel="stylesheet" href="viewer.css?v=20260928-real-gutter2">
-<link rel="stylesheet" href="infoview.css?v=20260928-real-gutter2">
-<link rel="stylesheet" href="gutter.css?v=20260928-real-gutter2">
-<script src="viewer.js?v=20260928-real-gutter2" defer></script>
-<script src="infoview.js?v=20260928-real-gutter2" defer></script>
+<link rel="stylesheet" href="viewer.css?v=__ASSET_VERSION__">
+<link rel="stylesheet" href="infoview.css?v=__ASSET_VERSION__">
+<script type="module" src="viewer.mjs?v=__ASSET_VERSION__"></script>
+<script type="module" src="infoview.mjs?v=__ASSET_VERSION__"></script>
 </head>
 <body>
 <main class="viewer">
@@ -17,7 +16,6 @@
       <div id="targetRow" class="target-row" hidden>
         <span id="targetBadge" class="target-badge"></span>
         <span id="targetName" class="target-name"></span>
-        <span id="proofStatus" class="proof-status" hidden></span>
       </div>
       <div class="meta-grid">
         <div class="meta-block">

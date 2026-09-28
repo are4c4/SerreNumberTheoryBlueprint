@@ -47,3 +47,21 @@ Notion embed
 ```
 
 このビルドは Verso Blueprint を使用しません。
+
+## 実装構成
+
+Viewer はフレームワークを使わない ES Modules と静的 CSS で構成します。
+
+- `viewer.mjs`: DOM 描画と画面イベント
+- `infoview.mjs`: hover / goal InfoView
+- `lib/manifest.mjs`: URL と manifest の解決
+- `lib/highlight.mjs`: Viewer / InfoView 共通のフォールバック強調
+- `lib/proof.mjs`: proof status と gutter
+- `lib/data.mjs`: 静的 JSON の取得
+
+`index.html` の asset version は手動更新せず、ビルド時に commit SHA から生成します。
+
+## 検証
+
+`./scripts/build-notion.sh` は生成後に HTML と ES Module のローカル参照を検査し、参照先 asset が欠けている場合は失敗します。
+`resolveItem`、semantic 行対応、proof gutter、fallback highlighting は Python `unittest` と Node `node:test` で CI 検証します。

@@ -129,6 +129,20 @@ private partial def renderHighlighted : Highlighted → String × String
           (html ++ hHtml, text ++ hText))
         ("", "")
 
+private def declarationKeywords : List String :=
+  ["theorem", "lemma", "def", "abbrev", "example", "instance", "structure", "class", "inductive"]
+
+private partial def firstDeclarationKeyword : Highlighted → Option String
+  | .token tok =>
+      if declarationKeywords.contains tok.content then some tok.content else none
+  | .text _ | .unparsed _ | .point _ _ => none
+  | .span _ content => firstDeclarationKeyword content
+  | .tactics _ _ _ content => firstDeclarationKeyword content
+  | .seq highlights =>
+      highlights.foldl
+        (fun found h => found.orElse (fun _ => firstDeclarationKeyword h))
+        none
+
 private def itemToJson (item : ModuleItem) : Json :=
   let (html, text) := renderHighlighted item.code
   let startLine := item.range.map (fun r => r.1.line) |>.getD 1
@@ -136,6 +150,7 @@ private def itemToJson (item : ModuleItem) : Json :=
   Json.mkObj [
     ("defines", toJson (item.defines.map toString)),
     ("kind", toJson (toString item.kind)),
+    ("displayKind", toJson (firstDeclarationKeyword item.code)),
     ("startLine", toJson startLine),
     ("endLine", toJson endLine),
     ("html", toJson html),
