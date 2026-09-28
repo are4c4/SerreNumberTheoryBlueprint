@@ -42,18 +42,79 @@
     const text = String(value ?? '');
     try { return decodeURIComponent(text); } catch { return text; }
   };
-  const label = text => {
+
+  const escHtml = value => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\"/g, '&quot;');
+
+  const leanKeywords = new Set([
+    'import', 'open', 'namespace', 'section', 'end', 'variable', 'variables', 'universe',
+    'include', 'omit', 'where', 'by', 'fun', 'in', 'let', 'if', 'then', 'else', 'match', 'with',
+    'theorem', 'lemma', 'def', 'abbrev', 'example', 'instance', 'structure', 'class', 'inductive',
+    'noncomputable', 'private', 'protected', 'local', 'exact', 'intro', 'apply', 'rw', 'simp',
+    'constructor', 'rcases', 'rintro', 'have', 'show', 'from', 'calc', 'using', 'at'
+  ]);
+  const leanTypes = new Set([
+    'Type', 'Prop', 'Sort', 'Nat', 'Int', 'Rat', 'Bool', 'String', 'Unit', 'Fin',
+    'Field', 'Fintype', 'CharP', 'DecidableEq', 'MvPolynomial', 'Polynomial', 'Module',
+    'ZMod', 'Set', 'List', 'Option', 'Subtype', 'Fact', 'Prime'
+  ]);
+  const leanLiterals = new Set(['true', 'false']);
+  const leanTokenPattern = /:=|=>|->|<-|≤|≥|≠|⊢|∀|∃|λ|[A-Za-z_][A-Za-z0-9_'.]*|\d+|[()\[\]{}:,.^=+\-*\/|]/g;
+
+  function classifyLeanWord(token) {
+    if (leanKeywords.has(token)) return 'keyword';
+    if (leanTypes.has(token) || /^(?:Type|Sort)_?u?_?\d*$/.test(token)) return 'type';
+    if (leanLiterals.has(token) || /^\d+$/.test(token)) return 'literal';
+    if (/^inst/.test(token)) return 'implicit';
+    if (/^[A-Za-z]$/.test(token) || /^[a-z][A-Za-z0-9_']*$/.test(token)) return 'var';
+    if (/^[A-Z][A-Za-z0-9_']*(?:\.[A-Za-z0-9_']+)*$/.test(token)) return 'const';
+    return 'ident';
+  }
+
+  function highlightLeanText(text) {
+    const raw = String(text ?? '');
+    let out = '';
+    let last = 0;
+    for (const match of raw.matchAll(leanTokenPattern)) {
+      const token = match[0];
+      const index = match.index ?? 0;
+      out += escHtml(raw.slice(last, index));
+      const cls = /^(?::=|=>|->|<-|≤|≥|≠|⊢|∀|∃|λ|[()\[\]{}:,.^=+\-*\/|])$/.test(token)
+        ? 'punct'
+        : classifyLeanWord(token);
+      out += `<span class="lean-hl-${cls}">${escHtml(token)}</span>`;
+      last = index + token.length;
+    }
+    out += escHtml(raw.slice(last));
+    return out;
+  }
+
+  function label(text) {
     const node = document.createElement('div');
     node.className = 'lean-infoview-label';
     node.textContent = text;
     body.appendChild(node);
-  };
-  const pre = text => {
+  }
+
+  function pre(text, options = {}) {
     const node = document.createElement('pre');
-    node.className = 'lean-infoview-pre';
-    node.textContent = String(text ?? '');
+    node.className = `lean-infoview-pre lean-code-highlight${options.className ? ` ${options.className}` : ''}`;
+    node.innerHTML = options.highlight === false ? escHtml(text) : highlightLeanText(text);
     body.appendChild(node);
-  };
+    return node;
+  }
+
+  function renderTooltip({ name, signature, docs, proofHint }) {
+    const sections = [];
+    if (name) sections.push(`<div class="lean-tooltip-title">${highlightLeanText(name)}</div>`);
+    if (signature) sections.push(`<pre class="lean-tooltip-code lean-code-highlight">${highlightLeanText(signature)}</pre>`);
+    if (docs) sections.push(`<div class="lean-tooltip-docs">${escHtml(docs)}</div>`);
+    if (proofHint) sections.push(`<div class="lean-tooltip-hint">${escHtml(proofHint)}</div>`);
+    return sections.join('');
+  }
 
   function showToken(target) {
     kind.textContent = target.dataset.semantic || 'info';
@@ -72,6 +133,15 @@
     panel.hidden = false;
   }
 
+  function hypothesisHtml(h) {
+    const names = Array.isArray(h.names) ? h.names.join(' ') : '';
+    const type = h.type || '';
+    const namesHtml = names
+      ? `<span class="lean-hl-var lean-hl-hyp-name">${escHtml(names)}</span><span class="lean-hl-punct"> : </span>`
+      : '';
+    return `${namesHtml}${highlightLeanText(type)}`;
+  }
+
   function showGoals(marker, sourceLabel = 'カーソル位置の証明状態') {
     let goals = [];
     try { goals = JSON.parse(marker.dataset.goals || '[]'); } catch {}
@@ -79,7 +149,7 @@
     title.textContent = goals.length > 1 ? `${sourceLabel} · ${goals.length} goals` : sourceLabel;
     body.replaceChildren();
     if (!goals.length) {
-      pre('ゴールはありません．');
+      pre('ゴールはありません．', { highlight: false });
       panel.dataset.mode = 'fixed';
       panel.hidden = false;
       return;
@@ -95,14 +165,13 @@
       }
       (goal.hypotheses || []).forEach(h => {
         const row = document.createElement('div');
-        row.className = 'lean-infoview-hyp';
-        const names = Array.isArray(h.names) ? h.names.join(' ') : '';
-        row.textContent = `${names}${names ? ' : ' : ''}${h.type || ''}`;
+        row.className = 'lean-infoview-hyp lean-code-highlight';
+        row.innerHTML = hypothesisHtml(h);
         block.appendChild(row);
       });
       const conclusion = document.createElement('div');
-      conclusion.className = 'lean-infoview-turnstile';
-      conclusion.textContent = `${goal.goalPrefix || '⊢'} ${goal.conclusion || ''}`;
+      conclusion.className = 'lean-infoview-turnstile lean-code-highlight';
+      conclusion.innerHTML = `<span class="lean-hl-turnstile">${escHtml(goal.goalPrefix || '⊢')}</span> ${highlightLeanText(goal.conclusion || '')}`;
       block.appendChild(conclusion);
       body.appendChild(block);
     });
@@ -219,7 +288,7 @@
     const proofHint = target.matches(tacticSelector) && nearestGoalMarker(target)
       ? 'クリックするとこの位置の証明状態を固定表示します．マウス移動では切り替わりません．'
       : '';
-    tooltip.textContent = [name, signature, docs, proofHint].filter(Boolean).join('\n\n');
+    tooltip.innerHTML = renderTooltip({ name, signature, docs, proofHint });
     tooltip.hidden = false;
   });
   document.addEventListener('mousemove', event => {
