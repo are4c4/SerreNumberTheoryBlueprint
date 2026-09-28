@@ -44,7 +44,6 @@ pre{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1
 .proof-gutter{user-select:none;text-align:center;color:#3794ff;padding:8px 0;width:1.5em;min-width:1.5em;overflow:visible;background:#1e1e1e}
 .proof-gutter-marker,.proof-gutter-spacer{display:inline-flex;align-items:center;justify-content:center;width:1.5em;height:1em}
 .proof-gutter-marker{color:#3794ff;font:800 13px/1 ui-monospace,SFMono-Regular,Menlo,monospace}
-.proof-gutter-marker.proved{font-size:0}
 .proof-gutter-marker.proved svg{display:block;width:1.5em;height:1em;overflow:visible}
 .proof-gutter-marker.proved path{fill:none;stroke:#3794ff;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .proof-gutter-marker.incomplete{color:#cca700}
