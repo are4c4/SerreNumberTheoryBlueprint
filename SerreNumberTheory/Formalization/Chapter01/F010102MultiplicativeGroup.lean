@@ -157,15 +157,6 @@ variable (p : ℕ) [Fact p.Prime] [CharP K p]
 local instance : Algebra (ZMod p) K :=
   ZMod.algebra K p
 
-/-!
-### 位数 `p ^ f` の有限体
--/
-
-variable (p : ℕ) [Fact p.Prime] [CharP K p]
-
-local instance : Algebra (ZMod p) K :=
-  ZMod.algebra K p
-
 /--
 定理2．`K` が標数 `p` の有限体で，
 `ZMod p` 上の次元が `f` ならば，
