@@ -38,17 +38,29 @@
 
   const qualifiedIdentifierPattern = /^[A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z_][A-Za-z0-9_']*)+$/;
 
+  function isConstantLikeToken(token, semantic) {
+    return semantic === 'const'
+      || semantic === 'constructor'
+      || token.classList.contains('function-like')
+      || token.classList.contains('const')
+      || token.classList.contains('member-like')
+      || token.classList.contains('declaration');
+  }
+
   function classifyLeanToken(token) {
     const semantic = token.dataset.semantic || '';
     if (semantic) token.classList.add(`semantic-${semantic}`);
     if (semantic === 'variable') token.classList.add('variable-token');
 
     const text = token.textContent || '';
-    if ((semantic === 'const' || semantic === 'constructor') && token.dataset.definitionSite === 'true') {
+    const constantLike = isConstantLikeToken(token, semantic);
+    if (constantLike) token.classList.add('constant-like');
+
+    if (constantLike && token.dataset.definitionSite === 'true') {
       token.classList.add('definition-site');
     }
 
-    if ((semantic === 'const' || semantic === 'constructor') && qualifiedIdentifierPattern.test(text)) {
+    if (constantLike && qualifiedIdentifierPattern.test(text)) {
       const lastDot = text.lastIndexOf('.');
       const prefix = document.createElement('span');
       prefix.className = 'lean-qualified-prefix';
@@ -64,7 +76,7 @@
       return;
     }
 
-    if ((semantic === 'const' || semantic === 'constructor') && /^[A-ZΑ-Ω]/u.test(text)) {
+    if (constantLike && /^[A-ZΑ-Ω]/u.test(text)) {
       token.classList.add('type-const');
     }
   }
