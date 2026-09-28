@@ -275,3 +275,25 @@
     min-height: 0;
   }
 }
+
+/* Muted VS Code-like InfoView colors: keep structure, reduce rainbow syntax. */
+.lean-code-highlight .lean-hl-keyword{color:#c586c0;font-weight:600}
+.lean-code-highlight .lean-hl-type{color:#d4d4d4;font-weight:400}
+.lean-code-highlight .lean-hl-literal{color:#b5cea8;font-weight:400}
+.lean-code-highlight .lean-hl-var,
+.lean-code-highlight .lean-hl-hyp-name{color:#d4d4d4;font-weight:600}
+.lean-code-highlight .lean-hl-implicit{color:#858585;font-style:italic;font-weight:400}
+.lean-code-highlight .lean-hl-const,
+.lean-code-highlight .lean-hl-ident{color:#d4d4d4;font-weight:400}
+.lean-code-highlight .lean-hl-punct{color:#8c8c8c;font-weight:400}
+.lean-code-highlight .lean-hl-turnstile{color:#3794ff;font-weight:700}
+.lean-tooltip-code .lean-hl-keyword,
+.lean-infoview-pre .lean-hl-keyword{color:#c586c0}
+.lean-tooltip-code .lean-hl-type,
+.lean-infoview-pre .lean-hl-type{color:#c8c8c8}
+.lean-infoview-hyp .lean-hl-var,
+.lean-infoview-hyp .lean-hl-hyp-name,
+.lean-infoview-turnstile .lean-hl-var,
+.lean-infoview-turnstile .lean-hl-hyp-name{color:#d4d4d4;font-weight:600}
+.lean-infoview-panel[data-mode="fixed"] .lean-infoview-kind,
+.lean-infoview-kind{border-color:#3f3f46;color:#c8c8c8;background:#1f1f1f}
