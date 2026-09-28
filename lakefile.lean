@@ -24,3 +24,8 @@ lean_exe «miniblueprint-html» where
 /-- Convert SubVerso semantic highlighting data into lightweight JSON for the Notion viewer. -/
 lean_exe «notion-highlight-export» where
   root := `NotionHighlightExport
+
+
+/-- Export SubVerso semantic highlighting for the static Notion viewer. -/
+lean_exe «notion-data-export» where
+  root := `NotionHighlightExport
