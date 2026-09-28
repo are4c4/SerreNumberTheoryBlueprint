@@ -133,7 +133,7 @@ F(x+y) = F(x) + F(y)
 :::
 :::proof "frobenius_add"
 
-指数標数 $`p` の環では、二項展開に現れる中間の項が消えるため、
+標数 $`p` の環では、二項展開に現れる中間の項が消えるため、
 
 $$`
 (x+y)^p=x^p+y^p
@@ -188,7 +188,7 @@ F(1)=1
 :::
 
 
-:::lemma_ "frobenius_injective" (lean := "SerreNumberTheory.frobenius_injective") (uses := "frobenius_map")
+:::lemma_ "frobenius_injective" (lean := "SerreNumberTheory.myFrobenius_injective") (uses := "frobenius_map")
 体 $`K` 上のFrobenius写像は単射である。
 :::
 :::proof "frobenius_injective"
@@ -204,7 +204,7 @@ $$`
 :::
 
 
-:::lemma_ "dd"
+:::theorem "frobenius_equiv_powers" (lean := "SerreNumberTheory.myFrobeniusEquivPowers") (uses := "frobenius_injective")
 体 $`K` の標数が $`p > 0` であるとする．
 
 このとき，Frobenius写像

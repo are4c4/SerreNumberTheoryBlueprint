@@ -1,124 +1,89 @@
-# Project Template
+# Serre Number Theory Blueprint
 
-This folder is a copyable starter Blueprint project.
+セール『数論講義』に現れる定義・命題・定理を、Lean 4 と mathlib を用いて形式化するプロジェクトです。
+自然言語による記述と Lean の形式化を対応づけるため、[Verso Blueprint](https://github.com/leanprover/verso-blueprint) を使用しています。
 
-To inspect the generated output, copy this folder and run the local workflow
-below; it writes the site to `_out/site/html-multi/`.
+## 現在の内容
 
-The goal is not to show every feature. The goal is to give you one small
-project that already has the right moving parts:
+現在、Chapter 01 について次の形式化を収録しています。
 
-- a GitHub Pages workflow under `.github/workflows/`
-- chapter files with real Blueprint blocks
-- a Blueprint top-level file
-- a generator entry point
-- a local CI script for build-and-render checks
-- rendered graph and summary pages
+- `F010101FiniteFields.lean`: 有限体、Frobenius 写像、有限体の存在・一意性に関する結果
+- `F010102MultiplicativeGroup.lean`: 有限体の乗法群の巡回性
+- `F010201PowerSums.lean`: 有限体上のべき乗和
+- `F010202ChevalleyWarning.lean`: Chevalley–Warning の定理
 
-## File Layout
+Blueprint 側では、現在 `B010101FiniteFields.lean` を公開文書として接続しています。
+後続節の自然言語側は順次追加予定です。
+
+## ディレクトリ構成
 
 ```text
-project_template/
-  .github/
-    workflows/
-      blueprint-pages.yml
-      pages.yml
-  .gitignore
-  lakefile.lean
-  lean-toolchain
-  ProjectTemplate.lean
-  ProjectTemplate/
-    Blueprint.lean
-    Chapters/
-      Addition.lean
-      Multiplication.lean
-      Collatz.lean
-  ProjectTemplateMain.lean
-  source/
-    addition-source.pdf
-  scripts/
-    ci-pages.sh
+SerreNumberTheoryBlueprint/
+├── SerreNumberTheory/
+│   ├── Formalization/
+│   │   └── Chapter01/
+│   │       ├── F010101FiniteFields.lean
+│   │       ├── F010102MultiplicativeGroup.lean
+│   │       ├── F010201PowerSums.lean
+│   │       └── F010202ChevalleyWarning.lean
+│   ├── Blueprint/
+│   │   └── Chapter01/
+│   │       └── B010101FiniteFields.lean
+│   └── Blueprint.lean
+├── SerreNumberTheory.lean
+├── SerreNumberTheoryMain.lean
+├── lakefile.lean
+└── lean-toolchain
 ```
 
-The important files are:
+- `Formalization/`: Lean による形式化本体
+- `Blueprint/`: 自然言語の定理文・証明概要と Lean 宣言の対応
+- `SerreNumberTheory/Blueprint.lean`: Blueprint 文書全体と依存関係グラフ・進捗表示
+- `SerreNumberTheoryMain.lean`: Verso Blueprint の生成エントリポイント
 
-- `ProjectTemplate/Chapters/Addition.lean`: the first chapter
-- `ProjectTemplate/Chapters/Multiplication.lean`: the second chapter
-- `ProjectTemplate/Chapters/Collatz.lean`: a separate exploratory chapter with
-  the intentionally unfinished conjecture
-- `ProjectTemplate/Blueprint.lean`: the Blueprint top-level file
-- `ProjectTemplateMain.lean`: the rendering entry point
-- `source/addition-source.pdf`: a tiny committed source-document fixture used
-  by the addition chapter's source chip and preview
-- `lakefile.lean`: the package definition
-- `.github/workflows/blueprint-pages.yml`: copyable reusable Pages workflow
-  used by the template
-- `.github/workflows/pages.yml`: thin caller into the local reusable workflow
-  that builds and deploys the generated HTML to GitHub Pages
-- `scripts/ci-pages.sh`: the local command that the Pages workflow runs
+## 環境
 
-## What the template demonstrates
+- Lean 4.32.0
+- mathlib 4.32.0
+- Verso Blueprint 4.32.0
 
-- labels that identify Blueprint nodes
-- `:::definition`, `:::proposition`, `:::theorem`, and `:::proof`
-- local Lean code attached to a Blueprint label
-- local Rust code attached to a Blueprint label
-- a statement linked to an existing Lean declaration
-- source-document metadata attached to one theorem
-- group and author metadata
-- rendered progress summary and dependency graph pages
-- a separate Collatz chapter with one intentionally unfinished theorem so the
-  first graph render shows an in-progress proof state
-- basic math rendering in the informal text
+依存関係は `lake-manifest.json` に固定しています。
 
-## Recommended workflow
+## ビルド
 
-1. Copy this folder into a new repository.
-2. Rename `ProjectTemplate` to your project name.
-3. Keep the generator entry point and top-level file structure.
-4. Replace the addition, multiplication, and Collatz chapters with your own
-   content.
-
-Typical commands:
+初回は必要に応じて依存関係を取得します。
 
 ```bash
 lake update
-./scripts/ci-pages.sh
 ```
 
-Run `lake update` once after copying the template. After that, use
-`./scripts/ci-pages.sh` whenever you want the same local build-and-render check
-that the included GitHub Pages workflow runs. The script delegates to the
-project helper:
+Lean コード全体の確認:
+
+```bash
+lake build
+```
+
+Blueprint の生成:
 
 ```bash
 lake exe vbp build
 ```
 
-`vbp build` builds the Lean library artifacts, prepares the generator file, and
-then runs the generator through Lake's Lean wrapper without relying on a
-separate Lake executable target.
-
-To build a PDF locally, run:
+生成物は `_out/site/html-multi/` に出力されます。ローカルで確認する場合は、例えば次のようにします。
 
 ```bash
-lake exe vbp build --pdf
+python3 -m http.server 8000 --directory _out/site/html-multi
 ```
 
-This writes `_out/site/pdf/main.pdf` and requires a `lualatex`-compatible
-command on `PATH`.
+ブラウザで `http://localhost:8000/` を開いて確認できます。
+
+ローカルで GitHub Pages と同じ確認を行う場合:
+
+```bash
+./scripts/ci-pages.sh
+```
 
 ## GitHub Pages
 
-The template includes `.github/workflows/pages.yml`.
-It also includes `.github/workflows/blueprint-pages.yml`.
-
-- on pull requests, it builds the Blueprint site and uploads the Pages artifact
-- on pushes to `main`, it deploys `_out/site/html-multi` to GitHub Pages
-
-Depending on your repository or organization settings, you may still need to
-enable GitHub Pages with GitHub Actions as the publishing source once.
-
-## Next step
-
-Continue with [doc/GETTING_STARTED.md](../doc/GETTING_STARTED.md).
+`main` への push 時に GitHub Actions で Blueprint をビルドし、GitHub Pages に公開します。
+Pull Request でも同じビルドを実行し、生成可能かを確認します。
