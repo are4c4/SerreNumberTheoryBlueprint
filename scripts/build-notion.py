@@ -103,29 +103,61 @@ def trim_trailing_empty_line(lines: list[str]) -> list[str]:
     return lines
 
 
+def normalize_line(line: str) -> str:
+    return re.sub(r"\s+", " ", line).strip()
+
+
 def semantic_by_line_for_range(lines: list[str], item: dict) -> dict[int, str]:
     """Map SubVerso-rendered HTML rows back to source line numbers.
 
-    V2 stores source lines separately from SubVerso semantic HTML.  The first
-    implementation required SubVerso's reconstructed plain text to be byte-for-
-    byte identical to the source segment before using the HTML.  In practice,
-    SubVerso may normalize trivia while preserving the same source range, so
-    that strict check dropped most declaration HTML and the viewer fell back to
-    plain escaped text.  Line-count alignment is the stable contract we need
-    here because the rendered HTML is already produced from the same item range.
+    The viewer needs the SubVerso HTML, not only plain text, because the HTML
+    contains data-signature / data-goals attributes used by the InfoView.  Some
+    SubVerso items normalize trivia or include slightly different leading /
+    trailing blank rows than the original source range, so an exact line-count
+    check is too fragile.  Prefer a normalized text alignment and fall back to a
+    best-effort direct prefix mapping instead of discarding semantic HTML.
     """
     start = int(item.get("startLine") or 1)
     end = int(item.get("endLine") or start)
     source_segment = lines[start - 1 : end]
-    _, html_lines = split_semantic(item)
-    html_lines = trim_trailing_empty_line(html_lines)
-
-    if len(html_lines) != len(source_segment):
+    source_count = len(source_segment)
+    if source_count <= 0:
         return {}
 
+    text_lines, html_lines = split_semantic(item)
+    text_lines = trim_trailing_empty_line(text_lines)
+    html_lines = trim_trailing_empty_line(html_lines)
+    pairs = list(zip(text_lines, html_lines))
+    if not pairs:
+        return {}
+
+    # Drop semantic-only blank padding at the edges.  Keep source blanks when
+    # the source range itself starts or ends with a blank line.
+    while pairs and not pairs[0][0].strip() and source_segment and source_segment[0].strip():
+        pairs.pop(0)
+    while pairs and not pairs[-1][0].strip() and source_segment and source_segment[-1].strip():
+        pairs.pop()
+    if not pairs:
+        return {}
+
+    semantic_norm = [normalize_line(text) for text, _ in pairs]
+    source_norm = [normalize_line(text) for text in source_segment]
+
+    if len(pairs) <= len(source_segment):
+        for offset in range(len(source_segment) - len(pairs) + 1):
+            if all(
+                not semantic_norm[i] or semantic_norm[i] == source_norm[offset + i]
+                for i in range(len(pairs))
+            ):
+                return {
+                    start + offset + i: rendered
+                    for i, (_, rendered) in enumerate(pairs)
+                }
+
+    usable = min(len(pairs), source_count)
     return {
-        start + offset: rendered
-        for offset, rendered in enumerate(html_lines)
+        start + offset: pairs[offset][1]
+        for offset in range(usable)
     }
 
 
