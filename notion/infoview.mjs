@@ -40,19 +40,23 @@ if (viewer) {
     node.textContent = text;
     body.appendChild(node);
   }
+  function themedMeta(target, key) {
+    const value = target?.dataset?.[key] || "";
+    return value ? decodeMeta(value) : "";
+  }
   function pre(text, options = {}) {
     const node = document.createElement("pre");
     node.className = "lean-infoview-pre lean-code-highlight" + (options.className ? " " + options.className : "");
     node.innerHTML = options.highlight === false
       ? escapeHtml(text)
-      : highlightLeanSignature(text, options.declarationName || "");
+      : (options.html || highlightLeanSignature(text, options.declarationName || ""));
     body.appendChild(node);
     return node;
   }
-  function renderTooltip({name,signature,docs,proofHint}) {
+  function renderTooltip({name,signature,docs,proofHint,nameHtml,signatureHtml}) {
     const sections = [];
-    if (name) sections.push('<div class="lean-tooltip-title lean-code-highlight">' + highlightLeanSignature(name, name) + "</div>");
-    if (signature) sections.push('<pre class="lean-tooltip-code lean-code-highlight">' + highlightLeanSignature(signature, name) + "</pre>");
+    if (name) sections.push('<div class="lean-tooltip-title lean-code-highlight">' + (nameHtml || highlightLeanSignature(name, name)) + "</div>");
+    if (signature) sections.push('<pre class="lean-tooltip-code lean-code-highlight">' + (signatureHtml || highlightLeanSignature(signature, name)) + "</pre>");
     if (docs) sections.push('<div class="lean-tooltip-docs doc-comment-line">' + highlightLeanDocCommentLine(docs) + "</div>");
     if (proofHint) sections.push('<div class="lean-tooltip-hint">' + escapeHtml(proofHint) + "</div>");
     return sections.join("");
@@ -60,12 +64,15 @@ if (viewer) {
   function showToken(target) {
     const constName = decodeMeta(target.dataset.constName || target.textContent.trim());
     kind.textContent = target.dataset.semantic || "info";
-    title.innerHTML = highlightLeanSignature(constName, constName);
+    title.innerHTML = themedMeta(target, "vscodeName") || highlightLeanSignature(constName, constName);
     title.classList.add("lean-code-highlight");
     body.replaceChildren();
     if (target.dataset.signature) {
       label("Type");
-      pre(decodeMeta(target.dataset.signature), {declarationName:constName});
+      pre(decodeMeta(target.dataset.signature), {
+        declarationName:constName,
+        html:themedMeta(target, "vscodeSignature"),
+      });
     }
     if (target.dataset.docs) {
       label("Documentation");
@@ -237,8 +244,10 @@ if (viewer) {
     const name = decodeMeta(target.dataset.constName || target.textContent.trim());
     const signature = target.dataset.signature ? decodeMeta(target.dataset.signature) : "";
     const docs = target.dataset.docs ? decodeMeta(target.dataset.docs) : "";
+    const nameHtml = themedMeta(target, "vscodeName");
+    const signatureHtml = themedMeta(target, "vscodeSignature");
     const proofHint = target.matches(tacticSelector) && nearestGoalMarker(target) ? "クリックするとこの位置の証明状態を固定表示します．マウス移動では切り替わりません．" : "";
-    tooltip.innerHTML = renderTooltip({name,signature,docs,proofHint});
+    tooltip.innerHTML = renderTooltip({name,signature,docs,proofHint,nameHtml,signatureHtml});
     tooltip.hidden = false;
   });
   document.addEventListener("mousemove", event => {

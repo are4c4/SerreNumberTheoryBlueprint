@@ -26,6 +26,13 @@ jobs:
 
       - uses: actions/configure-pages@v6
 
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install TextMate build dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund --package-lock=false
+
       - name: Install elan
         run: |
           curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
