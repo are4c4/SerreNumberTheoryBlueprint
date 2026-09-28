@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.repository }}-notion-viewer-v2-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,9 +31,10 @@ jobs:
         uses: actions/cache@v5
         with:
           path: .lake/packages
-          key: ${{ runner.os }}-notion-v2-packages-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+          key: ${{ runner.os }}-lake-packages-v3-${{ hashFiles('lean-toolchain', 'lake-manifest.json', '.gitmodules') }}
           restore-keys: |
-            ${{ runner.os }}-notion-v2-packages-
+            ${{ runner.os }}-lake-packages-v3-
+            ${{ runner.os }}-lake-packages-v2-
 
       - if: ${{ steps.lake-package-cache.outputs.cache-hit != 'true' }}
         name: Warm mathlib cache
