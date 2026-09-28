@@ -17,7 +17,7 @@
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/\"/g, '&quot;');
 
   async function getJson(path) {
     const response = await fetch(path + (path.includes('?') ? '&' : '?') + 'v=' + Date.now(), {cache: 'no-store'});
@@ -114,6 +114,29 @@
     }
   }
 
+  function declarationKeyword(item) {
+    const rows = item.rows || [];
+    for (const row of rows) {
+      if (row.context) continue;
+      const text = String(row.text || '').trim();
+      if (!text) continue;
+      const match = text.match(/^(?:(?:noncomputable|private|protected|unsafe|partial)\s+)*(theorem|lemma|def|abbrev|example|instance|structure|class|inductive)\b/);
+      if (match) return match[1];
+      if (/^local\s+instance\b/.test(text)) return 'instance';
+    }
+    return '';
+  }
+
+  function displayKind(item) {
+    const raw = String(item.kind || '').trim();
+    const keyword = declarationKeyword(item);
+    if (keyword) return keyword;
+    if (raw === 'Lean.Parser.Command.declaration') return 'Declaration';
+    if (raw === 'local instance') return 'instance';
+    if (raw.startsWith('Lean.Parser.Command.')) return raw.slice('Lean.Parser.Command.'.length);
+    return raw || 'Lean';
+  }
+
   function githubUrl(manifest, item) {
     const repo = manifest.github?.repository;
     const ref = manifest.github?.ref || 'main';
@@ -124,7 +147,7 @@
   function render(item, manifest, statuses) {
     fileName.textContent = item.file;
     targetRow.hidden = false;
-    targetBadge.textContent = item.kind || 'Lean';
+    targetBadge.textContent = displayKind(item);
     targetName.textContent = item.primaryDeclaration || `${item.module}:${item.startLine}`;
     updateScopes(item.scopes);
     updateProof(item, statuses);
