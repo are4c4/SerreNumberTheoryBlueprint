@@ -1,5 +1,5 @@
 import { decodeMeta, escapeHtml } from "./lib/html.mjs";
-import { highlightLeanDocCommentLine, highlightLeanSignature, highlightLeanText } from "./lib/highlight.mjs";
+import { bracketDepthClass, highlightLeanDocCommentLine, highlightLeanSignature, highlightLeanText } from "./lib/highlight.mjs";
 
 const viewer = document.querySelector(".viewer");
 if (viewer) {
@@ -78,12 +78,45 @@ if (viewer) {
     panel.dataset.mode = "info";
     panel.hidden = false;
   }
+  const semanticOperators = new Set([":", ":=", "=", "^", "+", "-", "*", "/", "→", "↔", "≠", "≤", "≥", "<", ">", "∈", "∉", "⊆", "∧", "∨"]);
+  const semanticBrackets = new Set(["(", ")", "[", "]", "{", "}"]);
+
+  function normalizeSemanticHtml(html) {
+    if (!html) return "";
+    const template = document.createElement("template");
+    template.innerHTML = html;
+    const bracketState = {depth:0};
+    template.content.querySelectorAll(".lean-token").forEach(token => {
+      const text = token.textContent || "";
+      if (/^\d+$/.test(text)) {
+        token.classList.remove("unknown", "const");
+        token.classList.add("literal", "number");
+        return;
+      }
+      if (semanticBrackets.has(text)) {
+        token.classList.remove("unknown", "const", "operator");
+        token.classList.add("bracket");
+        const depthClass = bracketDepthClass(text, bracketState);
+        if (depthClass) token.classList.add(depthClass);
+        return;
+      }
+      if (semanticOperators.has(text)) {
+        token.classList.remove("unknown", "const");
+        token.classList.add("operator");
+      }
+    });
+    return template.innerHTML;
+  }
+
   function hypothesisHtml(hypothesis) {
     const names = Array.isArray(hypothesis.names) ? hypothesis.names.join(" ") : "";
     const namesHtml = hypothesis.namesHtml
-      || (names ? '<span class="lean-token var">' + escapeHtml(names) + "</span>" : "");
+      ? normalizeSemanticHtml(hypothesis.namesHtml)
+      : (names ? '<span class="lean-token var">' + escapeHtml(names) + "</span>" : "");
     const separator = namesHtml ? '<span class="lean-token operator"> : </span>' : "";
-    const typeHtml = hypothesis.typeHtml || highlightLeanText(hypothesis.type || "");
+    const typeHtml = hypothesis.typeHtml
+      ? normalizeSemanticHtml(hypothesis.typeHtml)
+      : highlightLeanText(hypothesis.type || "");
     return namesHtml + separator + typeHtml;
   }
   function showGoals(marker, sourceLabel = "カーソル位置の証明状態") {
@@ -115,7 +148,7 @@ if (viewer) {
       });
       const conclusion = document.createElement("div");
       conclusion.className = "lean-infoview-turnstile lean-code-highlight";
-      conclusion.innerHTML = '<span class="lean-hl-turnstile">' + escapeHtml(goal.goalPrefix || "⊢") + "</span> " + (goal.conclusionHtml || highlightLeanText(goal.conclusion || ""));
+      conclusion.innerHTML = '<span class="lean-hl-turnstile">' + escapeHtml(goal.goalPrefix || "⊢") + "</span> " + (goal.conclusionHtml ? normalizeSemanticHtml(goal.conclusionHtml) : highlightLeanText(goal.conclusion || ""));
       block.appendChild(conclusion);
       body.appendChild(block);
     });
