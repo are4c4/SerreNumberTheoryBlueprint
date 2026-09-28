@@ -55,10 +55,32 @@ pre{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1
 .lean-token.var,.lean-token.variable-token,.lean-token.wildcard,.lean-token.typed,.lean-token.function-like,.lean-token.const,.lean-token.option,.lean-token.semantic-const,.lean-token.semantic-constructor,.lean-token.constant-like,.lean-token.predicate-like,.lean-token.member-like,.lean-token.type-const,.lean-token.operator,.lean-token.separator,.lean-token.bracket,.lean-token.delimiter,.lean-token.qualified-const{color:var(--text)!important}
 .lean-qualified-prefix,.lean-qualified-dot,.lean-qualified-member{color:var(--text)!important}
 .lean-token.qualified-const.definition-site .lean-qualified-member{color:var(--decl)!important}
-@media (max-width:700px){
+@media (max-width:760px){
   body{padding:0}
   .viewer{border-radius:0;border-left:0;border-right:0}
-  .header{gap:10px}
-  .target-name{white-space:normal}
-  .actions{flex-wrap:wrap;justify-content:flex-end;padding-top:0}
+  .header{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:12px;border-bottom-color:#343434}
+  .heading{min-width:0;width:100%}
+  .target-row{display:grid;grid-template-columns:auto auto minmax(0,1fr);align-items:center;gap:6px 8px;width:100%}
+  .target-badge{grid-column:1;justify-self:start}
+  .proof-status{grid-column:2;justify-self:start}
+  .target-name{grid-column:1/-1;font-size:14px;line-height:1.28;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;word-break:break-word;max-width:none}
+  .meta-grid{margin-top:12px;gap:8px}
+  .meta-label{font-size:9px;margin-bottom:2px}
+  .file-name{font-size:10.5px;line-height:1.35;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;word-break:break-word}
+  .scope-row{gap:5px;align-items:flex-start}
+  .scope-chip{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .scope-sep{display:none}
+  .actions{padding-top:0;width:100%;justify-content:flex-start;gap:6px;flex-wrap:wrap}
+  button,a.button{font-size:10.5px;padding:5px 9px}
+}
+@media (max-width:430px){
+  .header{padding:10px;gap:10px}
+  .target-row{grid-template-columns:auto minmax(0,1fr);gap:6px 7px}
+  .proof-status{grid-column:1/-1;width:max-content}
+  .target-name{font-size:13.5px;line-height:1.3}
+  .actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .actions button,.actions .button{width:100%;text-align:center;padding-inline:4px}
+  pre{font-size:12.5px}
+  .line-nos{padding:8px 8px}
+  .code-pre{padding:8px 10px}
 }
