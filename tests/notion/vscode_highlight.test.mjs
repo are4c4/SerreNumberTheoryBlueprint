@@ -11,10 +11,12 @@ test("JSONC parser keeps URL-like text while stripping comments", () => {
   const value = parseJsonc(`{
     // comment
     "url": "https://example.com/a//b",
-    "value": 3 /* block */
+    "value": 3, /* block */
+    "list": [1, 2,],
   }`);
   assert.equal(value.url, "https://example.com/a//b");
   assert.equal(value.value, 3);
+  assert.deepEqual(value.list, [1, 2]);
 });
 
 test("TextMate renderer emits theme styles", () => {
