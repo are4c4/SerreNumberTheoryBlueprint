@@ -70,7 +70,31 @@ export function parseJsonc(text) {
     if (ch === "/" && next === "*") { blockComment = true; i += 1; continue; }
     out += ch;
   }
-  return JSON.parse(out);
+  let normalized = "";
+  inString = false;
+  escaped = false;
+  for (let i = 0; i < out.length; i += 1) {
+    const ch = out[i];
+    if (inString) {
+      normalized += ch;
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      normalized += ch;
+      continue;
+    }
+    if (ch === ",") {
+      let j = i + 1;
+      while (j < out.length && /\s/.test(out[j])) j += 1;
+      if (out[j] === "}" || out[j] === "]") continue;
+    }
+    normalized += ch;
+  }
+  return JSON.parse(normalized);
 }
 
 async function loadTheme(themePath) {
