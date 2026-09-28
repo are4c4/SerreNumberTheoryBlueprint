@@ -351,6 +351,7 @@ def main() -> int:
                 "module": module,
                 "file": rel_source_text,
                 "kind": str(raw.get("kind", "")),
+                "displayKind": raw.get("displayKind") or None,
                 "defines": defines,
                 "primaryDeclaration": defines[0] if defines else None,
                 "startLine": start,

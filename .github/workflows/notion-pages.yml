@@ -78,6 +78,11 @@ jobs:
             echo "::warning::Mathlib cache download failed; continuing with a normal build."
           fi
 
+      - name: Test Notion Viewer helpers
+        run: |
+          python3 -m unittest discover -s tests -p "test_*.py"
+          node --test tests/notion/*.test.mjs
+
       - name: Build Notion Viewer
         timeout-minutes: 25
         run: ./scripts/build-notion.sh
