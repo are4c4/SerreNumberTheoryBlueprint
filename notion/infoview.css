@@ -235,3 +235,43 @@
   font: 600 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
   white-space: pre-wrap;
 }
+
+@media (min-width: 1100px) {
+  .viewer:has(.lean-infoview-panel:not([hidden])) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(340px, 32vw, 560px);
+    grid-template-areas:
+      "header header"
+      "code infoview";
+    align-items: stretch;
+  }
+
+  .viewer:has(.lean-infoview-panel:not([hidden])) .header {
+    grid-area: header;
+  }
+
+  .viewer:has(.lean-infoview-panel:not([hidden])) .code-wrap {
+    grid-area: code;
+    min-width: 0;
+  }
+
+  .viewer:has(.lean-infoview-panel:not([hidden])) .lean-infoview-panel {
+    grid-area: infoview;
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    border-top: 0;
+    border-left: 1px solid #3c3c3c;
+  }
+
+  .viewer:has(.lean-infoview-panel:not([hidden])) .lean-infoview-head {
+    flex-shrink: 0;
+  }
+
+  .viewer:has(.lean-infoview-panel:not([hidden])) .lean-infoview-body {
+    flex: 1 1 auto;
+    max-height: none;
+    min-height: 0;
+  }
+}
