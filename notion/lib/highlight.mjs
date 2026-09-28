@@ -33,10 +33,19 @@ function mapTokens(raw, renderToken) {
   return out + escapeHtml(text.slice(last));
 }
 
+function renderHighlightedToken(token, cls, bracketState) {
+  if (bracketTokens.has(token)) {
+    const depthClass = bracketDepthClass(token, bracketState);
+    return '<span class="lean-hl-punct lean-hl-bracket ' + depthClass + '">' + escapeHtml(token) + "</span>";
+  }
+  return '<span class="lean-hl-' + cls + '">' + escapeHtml(token) + "</span>";
+}
+
 export function highlightLeanText(text) {
+  const bracketState = {depth:0};
   return mapTokens(text, token => {
     const cls = punctuationPattern.test(token) ? "punct" : classifyLeanWord(token);
-    return '<span class="lean-hl-' + cls + '">' + escapeHtml(token) + "</span>";
+    return renderHighlightedToken(token, cls, bracketState);
   });
 }
 
