@@ -121,9 +121,11 @@ function rawTextMateTheme(theme) {
   };
 }
 
-async function createHighlighter({ grammarPath, themePath }) {
+export async function createHighlighter({ grammarPath, markdownGrammarPath, themePath }) {
   const grammarText = await fs.readFile(grammarPath, "utf8");
+  const markdownGrammarText = await fs.readFile(markdownGrammarPath, "utf8");
   const rawGrammar = vsctm.parseRawGrammar(grammarText, grammarPath);
+  const rawMarkdownGrammar = vsctm.parseRawGrammar(markdownGrammarText, markdownGrammarPath);
   const theme = await loadTheme(themePath);
   const wasmPath = require.resolve("vscode-oniguruma/release/onig.wasm");
   const wasm = await fs.readFile(wasmPath);
@@ -134,7 +136,11 @@ async function createHighlighter({ grammarPath, themePath }) {
       createOnigScanner(patterns) { return new oniguruma.OnigScanner(patterns); },
       createOnigString(value) { return new oniguruma.OnigString(value); },
     }),
-    loadGrammar: async scopeName => scopeName === rawGrammar.scopeName ? rawGrammar : null,
+    loadGrammar: async scopeName => {
+      if (scopeName === rawGrammar.scopeName) return rawGrammar;
+      if (scopeName === rawMarkdownGrammar.scopeName) return rawMarkdownGrammar;
+      return null;
+    },
   });
   registry.setTheme(rawTextMateTheme(theme));
   const grammar = await registry.loadGrammar(rawGrammar.scopeName);
@@ -429,9 +435,10 @@ async function main() {
   const manifestPath = args.manifest;
   const sourceRoot = args["source-root"] || ".";
   const grammarPath = args.grammar || "notion/vendor/lean4.json";
+  const markdownGrammarPath = args["markdown-grammar"] || "notion/vendor/lean4-markdown.json";
   const themePath = args.theme || "notion/vendor/dark_plus.json";
   if (!manifestPath) throw new Error("Usage: apply-vscode-highlighting.mjs --manifest PATH [--source-root .]");
-  const highlighter = await createHighlighter({ grammarPath, themePath });
+  const highlighter = await createHighlighter({ grammarPath, markdownGrammarPath, themePath });
   const stats = await applyToManifest({ manifestPath, sourceRoot, highlighter });
   console.log(`VS Code highlighting: ${stats.themedRows} themed rows, ${stats.semanticRows} semantic rows, ${stats.fallbackRows} fallbacks`);
   if (stats.fallbackRows) console.warn(`VS Code highlighting fallback rows: ${stats.fallbackRows}`);
