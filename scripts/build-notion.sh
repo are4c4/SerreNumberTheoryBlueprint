@@ -25,6 +25,7 @@ node scripts/apply-vscode-highlighting.mjs --manifest "$OUT/data/manifest.json" 
 # Copy the whole static viewer tree so newly added assets cannot be omitted
 # from the Pages artifact by an out-of-date list of cp commands.
 cp -R notion/. "$OUT/"
+rm -rf "$OUT/vendor"
 
 ASSET_VERSION="${GITHUB_SHA:-$(git rev-parse --short=12 HEAD 2>/dev/null || printf 'local')}"
 python3 scripts/stamp-notion-assets.py "$OUT/index.html" "$ASSET_VERSION"
