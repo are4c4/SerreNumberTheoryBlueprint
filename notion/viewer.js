@@ -94,6 +94,38 @@
     return improveLeanTokenHtml(html);
   }
 
+  function proofStateForItem(item, statuses) {
+    const names = item.defines || [];
+    return (statuses.theorems || []).find(t => names.includes(t.name)) || null;
+  }
+
+  function inlineProofMarker(proofState) {
+    if (!proofState) return '';
+    const proved = proofState.status === 'proved';
+    const className = proved ? 'proved' : 'incomplete';
+    const title = proved
+      ? 'Proved: Lean kernel dependency check detected no sorryAx dependency.'
+      : 'Incomplete: this theorem transitively depends on sorryAx.';
+    const symbol = proved ? '✓' : '!';
+    const label = proved ? 'Proved' : 'Incomplete';
+    return `<span class="inline-proof-status ${className}" title="${esc(title)}" aria-label="${esc(label)}">${symbol}</span>`;
+  }
+
+  function addInlineProofMarker(html, proofState) {
+    const marker = inlineProofMarker(proofState);
+    if (!marker) return html;
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    const target = template.content.querySelector('.definition-site, .lean-token.declaration');
+    const markerTemplate = document.createElement('template');
+    markerTemplate.innerHTML = marker;
+    if (target) {
+      target.after(document.createTextNode(' '), markerTemplate.content.firstElementChild);
+      return template.innerHTML;
+    }
+    return `${html} ${marker}`;
+  }
+
   async function getJson(path) {
     const response = await fetch(path + (path.includes('?') ? '&' : '?') + 'v=' + Date.now(), {cache: 'no-store'});
     if (!response.ok) throw new Error(`${path}: HTTP ${response.status}`);
@@ -171,22 +203,11 @@
     ).join('');
   }
 
-  function updateProof(item, statuses) {
+  function updateHeaderProof() {
     proofStatus.hidden = true;
     proofStatus.className = 'proof-status';
-    const names = item.defines || [];
-    const theorem = (statuses.theorems || []).find(t => names.includes(t.name));
-    if (!theorem) return;
-    proofStatus.hidden = false;
-    if (theorem.status === 'proved') {
-      proofStatus.classList.add('proved');
-      proofStatus.textContent = '● Proved';
-      proofStatus.title = 'Lean kernel dependency check: no sorryAx dependency detected.';
-    } else {
-      proofStatus.classList.add('incomplete');
-      proofStatus.textContent = '● Incomplete';
-      proofStatus.title = 'This theorem transitively depends on sorryAx.';
-    }
+    proofStatus.textContent = '';
+    proofStatus.title = '';
   }
 
   function declarationKeyword(item) {
@@ -237,8 +258,9 @@
     codePre.addEventListener('click', () => codePre.focus({preventScroll: true}));
   }
 
-  function renderCodeRows(rows) {
+  function renderCodeRows(rows, proofState) {
     let inDocComment = false;
+    let proofMarkerRendered = false;
     return rows.map(row => {
       const text = String(row.text || '');
       const trimmed = text.trim();
@@ -246,7 +268,16 @@
       const isDocComment = inDocComment || startsDocComment;
       if (startsDocComment) inDocComment = true;
 
-      const rendered = rowHtml(row);
+      let rendered = rowHtml(row);
+      const shouldRenderProofMarker = proofState
+        && !proofMarkerRendered
+        && !row.context
+        && /^(?:(?:noncomputable|private|protected|unsafe|partial)\s+)*(theorem|lemma)\b/.test(trimmed);
+      if (shouldRenderProofMarker) {
+        rendered = addInlineProofMarker(rendered, proofState);
+        proofMarkerRendered = true;
+      }
+
       const classes = [];
       if (row.context) classes.push('context-line');
       if (isDocComment) classes.push('doc-comment-line');
@@ -263,7 +294,7 @@
     targetBadge.textContent = displayKind(item);
     targetName.textContent = item.primaryDeclaration || `${item.module}:${item.startLine}`;
     updateScopes(item.scopes);
-    updateProof(item, statuses);
+    updateHeaderProof();
 
     const gh = githubUrl(manifest, item);
     if (gh) {
@@ -274,9 +305,10 @@
     }
 
     const rows = item.rows || [];
+    const proofState = proofStateForItem(item, statuses);
     displayedCode = item.plainText || rows.map(r => r.text || '').join('\n');
     copyBtn.disabled = false;
-    codeWrap.innerHTML = `<div class="code-grid"><pre class="line-nos">${rows.map(r => r.line ?? '').join('\n')}</pre><pre class="code-pre" tabindex="0" contenteditable="plaintext-only" spellcheck="false" aria-label="Lean source code">${renderCodeRows(rows)}</pre></div>`;
+    codeWrap.innerHTML = `<div class="code-grid"><pre class="line-nos">${rows.map(r => r.line ?? '').join('\n')}</pre><pre class="code-pre" tabindex="0" contenteditable="plaintext-only" spellcheck="false" aria-label="Lean source code">${renderCodeRows(rows, proofState)}</pre></div>`;
     lockReadonlyCaret(codeWrap.querySelector('.code-pre'));
   }
 
