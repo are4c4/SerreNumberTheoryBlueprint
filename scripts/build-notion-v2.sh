@@ -8,13 +8,13 @@ rm -rf "$OUT"
 mkdir -p "$OUT/data" "$OUT/link" "$SEMANTIC_TMP"
 
 lake build SerreNumberTheory:highlighted
-lake build notion-data-export
+lake build notion-highlight-export
 
 while IFS= read -r src; do
   rel="${src#.lake/build/highlighted/}"
   dst="$SEMANTIC_TMP/$rel"
   mkdir -p "$(dirname "$dst")"
-  lake exe notion-data-export "$src" "$dst"
+  lake exe notion-highlight-export "$src" "$dst"
 done < <(find .lake/build/highlighted/SerreNumberTheory -type f -name '*.json' | sort)
 
 NOTION_V2_PROOF_STATUS="$OUT/proof-status.json" lake env lean NotionProofStatusExport.lean
