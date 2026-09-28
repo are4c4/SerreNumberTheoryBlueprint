@@ -13,16 +13,20 @@
 <main class="viewer">
   <header class="header">
     <div class="heading">
-      <div class="file-label">Lean source</div>
-      <div id="fileName" class="file-name"></div>
-      <div id="scopeWrap" class="scope-wrap" hidden>
-        <div class="scope-label">Scope</div>
-        <div id="scopeRow" class="scope-row"></div>
-      </div>
       <div id="targetRow" class="target-row" hidden>
         <span id="targetBadge" class="target-badge"></span>
         <span id="targetName" class="target-name"></span>
         <span id="proofStatus" class="proof-status" hidden></span>
+      </div>
+      <div class="meta-grid">
+        <div class="meta-block">
+          <div class="meta-label">Lean source</div>
+          <div id="fileName" class="file-name"></div>
+        </div>
+        <div id="scopeWrap" class="meta-block scope-wrap" hidden>
+          <div class="meta-label">Scope</div>
+          <div id="scopeRow" class="scope-row"></div>
+        </div>
       </div>
     </div>
     <div class="actions">

@@ -56,11 +56,21 @@ assert "legacyTargets" in data, "legacy URL compatibility data is missing"
 prefixes = data.get("sourcePrefixes", [])
 assert prefixes, "manifest sourcePrefixes is empty"
 assert all(any(item["file"].startswith(prefix) for prefix in prefixes) for item in data["items"].values())
+highlighted_decl_rows = sum(
+    1
+    for item in data["items"].values()
+    if item.get("defines")
+    for row in item.get("rows", [])
+    if '<span class="lean-token' in row.get("html", "")
+)
+if highlighted_decl_rows == 0:
+    print("warning: manifest has no semantic declaration rows; viewer will use client-side syntax fallback")
 print(
     "Notion Viewer manifest: "
     f"{len(data['items'])} items, "
     f"{len(data['declarations'])} declarations, "
-    f"{len(data['legacyTargets'])} legacy targets"
+    f"{len(data['legacyTargets'])} legacy targets, "
+    f"{highlighted_decl_rows} highlighted declaration rows"
 )
 PY
 

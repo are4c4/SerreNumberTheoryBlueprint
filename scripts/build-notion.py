@@ -97,16 +97,42 @@ def split_semantic(item: dict) -> tuple[list[str], list[str]]:
     return str(item.get("text", "")).split("\n"), str(item.get("html", "")).split("\n")
 
 
+def trim_trailing_empty_line(lines: list[str]) -> list[str]:
+    if lines and lines[-1] == "":
+        return lines[:-1]
+    return lines
+
+
+def semantic_by_line_for_range(lines: list[str], item: dict) -> dict[int, str]:
+    """Map SubVerso-rendered HTML rows back to source line numbers.
+
+    V2 stores source lines separately from SubVerso semantic HTML.  The first
+    implementation required SubVerso's reconstructed plain text to be byte-for-
+    byte identical to the source segment before using the HTML.  In practice,
+    SubVerso may normalize trivia while preserving the same source range, so
+    that strict check dropped most declaration HTML and the viewer fell back to
+    plain escaped text.  Line-count alignment is the stable contract we need
+    here because the rendered HTML is already produced from the same item range.
+    """
+    start = int(item.get("startLine") or 1)
+    end = int(item.get("endLine") or start)
+    source_segment = lines[start - 1 : end]
+    _, html_lines = split_semantic(item)
+    html_lines = trim_trailing_empty_line(html_lines)
+
+    if len(html_lines) != len(source_segment):
+        return {}
+
+    return {
+        start + offset: rendered
+        for offset, rendered in enumerate(html_lines)
+    }
+
+
 def semantic_line_map(lines: list[str], raw_items: list[dict]) -> dict[int, str]:
     result: dict[int, str] = {}
     for raw in raw_items:
-        start = int(raw.get("startLine") or 1)
-        end = int(raw.get("endLine") or start)
-        text_lines, html_lines = split_semantic(raw)
-        source_segment = lines[start - 1 : end]
-        if len(text_lines) == len(source_segment) and text_lines == source_segment:
-            for offset, rendered in enumerate(html_lines):
-                result[start + offset] = rendered
+        result.update(semantic_by_line_for_range(lines, raw))
     return result
 
 
@@ -114,13 +140,7 @@ def make_rows(lines: list[str], item: dict, variables: list[dict]) -> tuple[list
     start = int(item.get("startLine") or 1)
     end = int(item.get("endLine") or start)
     display_start = doc_start(lines, start)
-    semantic_text, semantic_html = split_semantic(item)
-    semantic_by_line: dict[int, str] = {}
-    source_segment = lines[start - 1 : end]
-
-    if len(semantic_text) == len(source_segment) and semantic_text == source_segment:
-        for offset, rendered in enumerate(semantic_html):
-            semantic_by_line[start + offset] = rendered
+    semantic_by_line = semantic_by_line_for_range(lines, item)
 
     rows: list[dict] = []
     plain_parts: list[str] = []
