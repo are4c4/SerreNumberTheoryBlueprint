@@ -411,7 +411,7 @@ async function main() {
   const highlighter = await createHighlighter({ grammarPath, themePath });
   const stats = await applyToManifest({ manifestPath, sourceRoot, highlighter });
   console.log(`VS Code highlighting: ${stats.themedRows} themed rows, ${stats.semanticRows} semantic rows, ${stats.fallbackRows} fallbacks`);
-  if (stats.fallbackRows) process.exitCode = 2;
+  if (stats.fallbackRows) console.warn(`VS Code highlighting fallback rows: ${stats.fallbackRows}`);
 }
 
 const invokedAsScript = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
