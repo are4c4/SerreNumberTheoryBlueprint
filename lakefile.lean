@@ -25,7 +25,3 @@ lean_exe «miniblueprint-html» where
 lean_exe «notion-highlight-export» where
   root := `NotionHighlightExport
 
-
-/-- Export SubVerso semantic highlighting for the static Notion viewer. -/
-lean_exe «notion-data-export» where
-  root := `NotionHighlightExport
