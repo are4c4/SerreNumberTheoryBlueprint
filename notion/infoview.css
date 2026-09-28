@@ -1,10 +1,7 @@
 .lean-token[data-signature],.lean-token[data-docs],.lean-token[data-const-name]{cursor:text;text-decoration:none;border-radius:2px}
 .lean-token[data-signature]:hover,.lean-token[data-docs]:hover,.lean-token[data-const-name]:hover{background:rgba(255,255,255,.075);outline:1px solid rgba(255,255,255,.10);outline-offset:1px}
 .lean-token[data-signature]:focus,.lean-token[data-docs]:focus,.lean-token[data-const-name]:focus{outline:1px solid #007acc;outline-offset:1px}
-.lean-proof-start:not(.lean-goal-marker),.lean-proof-end{display:inline-block;width:0;height:0;overflow:hidden;vertical-align:baseline;pointer-events:none}
-.lean-goal-marker{display:inline-flex;position:relative;width:.9em;min-width:.9em;height:1em;margin:0 .02em 0 -.01em;vertical-align:baseline;align-items:center;justify-content:center;outline:none;cursor:text}
-.lean-goal-marker::before{content:"⊢";position:absolute;left:0;top:-.02em;color:var(--muted);font-weight:700;cursor:text;opacity:.92}
-.lean-goal-marker:hover::before,.lean-goal-marker:focus::before{color:#dcdcaa;opacity:1}
+.lean-proof-start,.lean-proof-end{display:inline-block;width:0;min-width:0;height:0;margin:0;padding:0;overflow:hidden;vertical-align:baseline;pointer-events:none}
 .lean-infoview-tooltip{position:fixed;z-index:10000;max-width:min(720px,calc(100vw - 24px));padding:0;border:1px solid #4a4a4a;border-radius:7px;background:#252526;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.35);pointer-events:none;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;overflow:hidden}
 .lean-tooltip-title{padding:9px 11px 6px;color:var(--text);font-weight:600;overflow-wrap:anywhere}
 .lean-tooltip-code{margin:0;padding:8px 11px;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.14);color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere}
