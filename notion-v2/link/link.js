@@ -22,8 +22,7 @@
     if (!line) throw new Error('GitHubで行番号をクリックし、#L120 のようなURLにしてください。');
     return {
       repository: `${parts[0]}/${parts[1]}`,
-      ref: decodeURIComponent(parts[3]),
-      file: parts.slice(4).map(decodeURIComponent).join('/'),
+      blobTail: parts.slice(3).map(decodeURIComponent).join('/'),
       line,
     };
   }
@@ -46,7 +45,11 @@
       if (m.github?.repository && x.repository !== m.github.repository) {
         throw new Error(`このViewerは ${m.github.repository} 用です。`);
       }
-      const item = itemAt(m, x.file, x.line);
+      const file = Object.keys(m.files || {})
+        .filter(candidate => x.blobTail === candidate || x.blobTail.endsWith('/' + candidate))
+        .sort((a, b) => b.length - a.length)[0];
+      if (!file) throw new Error('URLに対応するLeanファイルがmanifestに見つかりませんでした。');
+      const item = itemAt(m, file, x.line);
       if (!item) throw new Error('その行の近くに表示可能なLean項目が見つかりませんでした。');
 
       const viewer = new URL('../', location.href);
