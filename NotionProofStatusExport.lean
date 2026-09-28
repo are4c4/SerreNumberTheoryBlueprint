@@ -1,4 +1,4 @@
-import SerreNumberTheory.Blueprint
+import SerreNumberTheory
 import Lean.Util.CollectAxioms
 
 open Lean
@@ -28,5 +28,11 @@ run_cmd do
           let axioms ← liftCoreM <| collectAxioms n
           entries := entries.push (statusEntry n axioms)
     | _ => pure ()
-  let out := Json.mkObj [("theorems", .arr entries)]
-  liftIO <| IO.FS.writeFile "_out/site/html-multi/proof-status.json" (toString out)
+  let out := Json.mkObj [
+    ("schemaVersion", toJson (2 : Nat)),
+    ("theorems", .arr entries)
+  ]
+  let output :=
+    (← liftIO <| IO.getEnv "NOTION_PROOF_STATUS")
+      |>.getD "_out/notion-v2/proof-status.json"
+  liftIO <| IO.FS.writeFile output (toString out)

@@ -1,0 +1,114 @@
+name: Notion Pages
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ${{ github.repository }}-notion-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Notion Viewer
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/configure-pages@v6
+
+      - name: Install elan
+        run: |
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Restore Lake package cache
+        id: lake-package-cache
+        uses: actions/cache@v5
+        with:
+          path: .lake/packages
+          key: ${{ runner.os }}-lake-packages-notion-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+          restore-keys: |
+            ${{ runner.os }}-lake-packages-notion-
+            ${{ runner.os }}-lake-packages-v3-
+
+      - name: Verify dependency manifest
+        run: |
+          python3 - <<'PY'
+          import json
+
+          with open("lake-manifest.json", encoding="utf-8") as f:
+              manifest = json.load(f)
+
+          packages = {p["name"]: p for p in manifest.get("packages", [])}
+          forbidden = {"VersoBlueprint", "verso", "«verso-slides»", "illuminate", "MD4Lean"}
+          remaining = sorted(forbidden & packages.keys())
+          if remaining:
+              raise SystemExit(f"Blueprint dependencies remain: {remaining}")
+
+          subverso = packages.get("subverso")
+          if not subverso or subverso.get("inherited") is not False:
+              raise SystemExit("subverso must be a direct dependency")
+          if subverso.get("rev") != "0076a9e8a3670d83c54c93414b2b26d3a8aba08d":
+              raise SystemExit("unexpected SubVerso revision")
+          PY
+
+      - name: Restore Lean build cache
+        uses: actions/cache@v5
+        with:
+          path: .lake/build
+          key: ${{ runner.os }}-lean-build-notion-${{ hashFiles('lean-toolchain', 'lake-manifest.json', 'lakefile.lean', 'SerreNumberTheory.lean', 'SerreNumberTheory/**/*.lean', 'NotionHighlightExport.lean', 'NotionProofStatusExport.lean', 'scripts/build-notion.*') }}
+          restore-keys: |
+            ${{ runner.os }}-lean-build-notion-
+
+      - if: ${{ steps.lake-package-cache.outputs.cache-hit != 'true' }}
+        name: Warm mathlib cache
+        timeout-minutes: 20
+        run: |
+          if ! lake exe cache get; then
+            echo "::warning::Mathlib cache download failed; continuing with a normal build."
+          fi
+
+      - name: Build Notion Viewer
+        timeout-minutes: 25
+        run: ./scripts/build-notion.sh
+
+      - name: Create Pages landing page
+        run: |
+          cat > _out/site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="ja">
+          <head>
+            <meta charset="utf-8">
+            <meta http-equiv="refresh" content="0; url=notion/">
+            <title>Lean Notion Viewer</title>
+          </head>
+          <body><a href="notion/">Open Lean Notion Viewer</a></body>
+          </html>
+          HTML
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _out/site
+
+  deploy:
+    name: Deploy Notion Viewer
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
