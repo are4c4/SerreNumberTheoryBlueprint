@@ -22,9 +22,11 @@ NOTION_V2_PROOF_STATUS="$OUT/proof-status.json" lake env lean NotionProofStatusE
 python3 scripts/build-notion-v2.py \
   --semantic-root "$SEMANTIC_TMP" \
   --output "$OUT" \
-  --source-root .
+  --source-root . \
+  --config notion-v2/config.json
 
 cp notion-v2/index.html "$OUT/index.html"
+cp notion-v2/config.json "$OUT/config.json"
 cp notion-v2/viewer.css "$OUT/viewer.css"
 cp notion-v2/viewer.js "$OUT/viewer.js"
 cp notion-v2/infoview.css "$OUT/infoview.css"
@@ -49,6 +51,9 @@ data = json.loads(p.read_text())
 assert data["schemaVersion"] == 2
 assert data["items"], "manifest contains no Lean items"
 assert data["declarations"], "manifest contains no declarations"
+prefixes = data.get("sourcePrefixes", [])
+assert prefixes, "manifest sourcePrefixes is empty"
+assert all(any(item["file"].startswith(p) for p in prefixes) for item in data["items"].values())
 print(f"Notion Viewer v2 manifest: {len(data['items'])} items, {len(data['declarations'])} declarations")
 PY
 
