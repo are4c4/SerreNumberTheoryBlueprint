@@ -31,9 +31,12 @@
   body.className = 'lean-infoview-body';
   panel.append(head, body);
 
+  let fixedGoalLocked = false;
+
   close.addEventListener('click', () => {
     panel.hidden = true;
     lastFollowMarker = null;
+    fixedGoalLocked = false;
   });
 
   const selector = '.lean-token[data-signature],.lean-token[data-docs],.lean-token[data-const-name]';
@@ -56,6 +59,7 @@
   };
 
   function showToken(target) {
+    fixedGoalLocked = false;
     kind.textContent = target.dataset.semantic || 'info';
     title.textContent = decodeMeta(target.dataset.constName || target.textContent.trim());
     body.replaceChildren();
@@ -73,6 +77,7 @@
   }
 
   function showGoals(marker, sourceLabel = 'Proof state', mode = 'fixed') {
+    fixedGoalLocked = mode === 'fixed';
     let goals = [];
     try { goals = JSON.parse(marker.dataset.goals || '[]'); } catch {}
     kind.textContent = 'Goal';
@@ -201,6 +206,7 @@
   let followPoint = null;
 
   function scheduleProofFollow(event) {
+    if (fixedGoalLocked && !panel.hidden && panel.dataset.mode === 'fixed') return;
     const activeCodePre = document.querySelector('.code-pre');
     if (!activeCodePre || !activeCodePre.contains(event.target)) return;
     followPoint = { x: event.clientX, y: event.clientY };
@@ -225,7 +231,7 @@
     const signature = target.dataset.signature ? decodeMeta(target.dataset.signature) : '';
     const docs = target.dataset.docs ? decodeMeta(target.dataset.docs) : '';
     const proofHint = target.matches(tacticSelector) && nearestGoalMarker(target)
-      ? 'カーソルを証明内で動かすと証明状態が追従します．クリックでもこの位置の証明状態を表示できます．'
+      ? 'カーソルを証明内で動かすと証明状態が追従します．クリックで固定し，×で固定を解除できます．'
       : '';
     tooltip.textContent = [name, signature, docs, proofHint].filter(Boolean).join('\n\n');
     tooltip.hidden = false;
