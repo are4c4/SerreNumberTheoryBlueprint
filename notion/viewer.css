@@ -12,7 +12,9 @@
   --member:#ce9178;
   --var:#9cdcfe;
   --literal:#b5cea8;
-  --comment:#6a9955
+  --comment:#6a9955;
+  --selection:#264f78;
+  --focus:#007acc
 }
 *{box-sizing:border-box}
 body{margin:0;padding:10px;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -41,9 +43,12 @@ button:disabled{opacity:.45;cursor:default}
 .code-grid{display:grid;grid-template-columns:auto minmax(max-content,1fr);align-items:start;min-width:max-content}
 pre{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.45;tab-size:2}
 .line-nos{user-select:none;text-align:right;color:var(--muted);padding:8px 10px;border-right:1px solid #333}
-.code-pre{padding:8px 14px;white-space:pre;color:var(--text)}
+.code-pre{padding:8px 14px;white-space:pre;color:var(--text);cursor:text;caret-color:#aeafad;outline:none;user-select:text;-webkit-user-select:text}
+.code-pre:focus{box-shadow:inset 2px 0 0 rgba(0,122,204,.75);background:rgba(255,255,255,.018)}
+.code-pre::selection,.code-pre *::selection{background:var(--selection);color:inherit}
 .context-line{opacity:.88}
 .error,.empty{padding:18px;font:12px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace}
+.lean-token{border-radius:2px;text-decoration:none}
 .lean-token.keyword,.lean-token.built-in{color:var(--keyword);font-weight:600}
 .lean-token.declaration{color:var(--decl)!important;font-weight:650}
 .lean-token.function-like,.lean-token.const,.lean-token.option{color:var(--fn)}
