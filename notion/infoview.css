@@ -1,9 +1,24 @@
 .lean-token[data-signature],
 .lean-token[data-docs],
 .lean-token[data-const-name] {
-  cursor: pointer;
-  text-decoration: underline dotted;
-  text-underline-offset: 2px;
+  cursor: text;
+  text-decoration: none;
+  border-radius: 2px;
+}
+
+.lean-token[data-signature]:hover,
+.lean-token[data-docs]:hover,
+.lean-token[data-const-name]:hover {
+  background: rgba(255, 255, 255, .075);
+  outline: 1px solid rgba(255, 255, 255, .10);
+  outline-offset: 1px;
+}
+
+.lean-token[data-signature]:focus,
+.lean-token[data-docs]:focus,
+.lean-token[data-const-name]:focus {
+  outline: 1px solid #007acc;
+  outline-offset: 1px;
 }
 
 .lean-proof-start:not(.lean-goal-marker),
@@ -24,7 +39,7 @@
   margin-right: .05em;
   vertical-align: baseline;
   outline: none;
-  cursor: pointer;
+  cursor: text;
 }
 
 .lean-goal-marker::before {
@@ -34,7 +49,7 @@
   top: 0;
   color: #858585;
   font-weight: 700;
-  cursor: pointer;
+  cursor: text;
   opacity: .85;
 }
 
