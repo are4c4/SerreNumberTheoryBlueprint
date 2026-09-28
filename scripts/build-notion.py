@@ -38,8 +38,7 @@ def source_ref() -> str:
 
 
 def source_path_from_semantic(path: Path, semantic_root: Path) -> Path:
-    rel = path.relative_to(semantic_root)
-    return rel.with_suffix(".lean")
+    return path.relative_to(semantic_root).with_suffix(".lean")
 
 
 def scope_and_variables(lines: list[str], before_line: int) -> tuple[list[dict], list[dict]]:
@@ -71,7 +70,6 @@ def scope_and_variables(lines: list[str], before_line: int) -> tuple[list[dict],
 def doc_start(lines: list[str], declaration_start: int) -> int:
     start = declaration_start - 1
     i = start - 1
-
     while i >= 0 and not lines[i].strip():
         i -= 1
 
@@ -92,7 +90,6 @@ def doc_start(lines: list[str], declaration_start: int) -> int:
     while i >= 0 and decorator_re.match(lines[i]):
         start = i
         i -= 1
-
     return start + 1
 
 
@@ -100,25 +97,41 @@ def split_semantic(item: dict) -> tuple[list[str], list[str]]:
     return str(item.get("text", "")).split("\n"), str(item.get("html", "")).split("\n")
 
 
+def semantic_line_map(lines: list[str], raw_items: list[dict]) -> dict[int, str]:
+    result: dict[int, str] = {}
+    for raw in raw_items:
+        start = int(raw.get("startLine") or 1)
+        end = int(raw.get("endLine") or start)
+        text_lines, html_lines = split_semantic(raw)
+        source_segment = lines[start - 1 : end]
+        if len(text_lines) == len(source_segment) and text_lines == source_segment:
+            for offset, rendered in enumerate(html_lines):
+                result[start + offset] = rendered
+    return result
+
+
 def make_rows(lines: list[str], item: dict, variables: list[dict]) -> tuple[list[dict], str]:
     start = int(item.get("startLine") or 1)
     end = int(item.get("endLine") or start)
     display_start = doc_start(lines, start)
-
     semantic_text, semantic_html = split_semantic(item)
     semantic_by_line: dict[int, str] = {}
-
     source_segment = lines[start - 1 : end]
+
     if len(semantic_text) == len(source_segment) and semantic_text == source_segment:
         for offset, rendered in enumerate(semantic_html):
             semantic_by_line[start + offset] = rendered
 
     rows: list[dict] = []
     plain_parts: list[str] = []
-
-    for v in variables:
-        rows.append({"line": v["line"], "html": html.escape(v["text"]), "text": v["text"], "context": True})
-        plain_parts.append(v["text"])
+    for variable in variables:
+        rows.append({
+            "line": variable["line"],
+            "html": html.escape(variable["text"]),
+            "text": variable["text"],
+            "context": True,
+        })
+        plain_parts.append(variable["text"])
 
     if variables:
         rows.append({"line": None, "html": "", "text": "", "context": True})
@@ -126,11 +139,116 @@ def make_rows(lines: list[str], item: dict, variables: list[dict]) -> tuple[list
 
     for line_no in range(display_start, end + 1):
         text = lines[line_no - 1] if 0 <= line_no - 1 < len(lines) else ""
-        rendered = semantic_by_line.get(line_no, html.escape(text))
-        rows.append({"line": line_no, "html": rendered, "text": text, "context": line_no < start})
+        rows.append({
+            "line": line_no,
+            "html": semantic_by_line.get(line_no, html.escape(text)),
+            "text": text,
+            "context": line_no < start,
+        })
         plain_parts.append(text)
 
     return rows, "\n".join(plain_parts)
+
+
+def raw_rows(
+    lines: list[str],
+    start: int,
+    end: int,
+    semantic_by_line: dict[int, str],
+) -> tuple[list[dict], str]:
+    rows: list[dict] = []
+    plain: list[str] = []
+    for line_no in range(start, end + 1):
+        text = lines[line_no - 1] if 0 <= line_no - 1 < len(lines) else ""
+        rows.append({
+            "line": line_no,
+            "html": semantic_by_line.get(line_no, html.escape(text)),
+            "text": text,
+            "context": False,
+        })
+        plain.append(text)
+    return rows, "\n".join(plain)
+
+
+def legacy_key(file: str, kind: str, name: str) -> str:
+    return "\x1f".join([file, kind, name])
+
+
+def add_legacy_targets(
+    legacy: dict[str, dict],
+    rel_source: str,
+    module: str,
+    lines: list[str],
+    raw_items: list[dict],
+) -> None:
+    semantic_by_line = semantic_line_map(lines, raw_items)
+    scope_re = re.compile(r"^\s*(namespace|section)\s+([^\s]+)\b")
+    end_re = re.compile(r"^\s*end(?:\s+[^\s]+)?\s*(?:--.*)?$")
+    local_instance_re = re.compile(r"^\s*local\s+instance\b")
+    top_command_re = re.compile(
+        r"^\s*(?:@\[[^\]]*\]\s*)?"
+        r"(?:(?:noncomputable|private|protected)\s+)?"
+        r"(?:theorem|lemma|example|def|abbrev|instance|structure|class|inductive|"
+        r"namespace|section|end|variable|variables|universe|open|export|include|"
+        r"omit|attribute|set_option|local\s+instance)\b"
+    )
+
+    stack: list[dict] = []
+    for index, line in enumerate(lines, start=1):
+        match = scope_re.match(line)
+        if match:
+            parents = [{"kind": x["kind"], "name": x["name"]} for x in stack]
+            stack.append({
+                "kind": match.group(1),
+                "name": match.group(2),
+                "start": index,
+                "parents": parents,
+            })
+            continue
+
+        if end_re.match(line) and stack:
+            scope = stack.pop()
+            rows, plain = raw_rows(lines, scope["start"], index, semantic_by_line)
+            item = {
+                "id": f"legacy:{module}:{scope['kind']}:{scope['name']}:{scope['start']}",
+                "module": module,
+                "file": rel_source,
+                "kind": scope["kind"],
+                "defines": [],
+                "primaryDeclaration": scope["name"],
+                "startLine": scope["start"],
+                "endLine": index,
+                "scopes": scope["parents"],
+                "rows": rows,
+                "plainText": plain,
+            }
+            legacy.setdefault(legacy_key(rel_source, scope["kind"], scope["name"]), item)
+
+    for index, line in enumerate(lines, start=1):
+        if not local_instance_re.match(line):
+            continue
+        end = index
+        while end < len(lines):
+            next_line = lines[end]
+            if not next_line.strip() or top_command_re.match(next_line):
+                break
+            end += 1
+        scopes, _ = scope_and_variables(lines, index)
+        rows, plain = raw_rows(lines, index, end, semantic_by_line)
+        item = {
+            "id": f"legacy:{module}:command:{index}",
+            "module": module,
+            "file": rel_source,
+            "kind": "local instance",
+            "defines": [],
+            "primaryDeclaration": f"line {index}",
+            "startLine": index,
+            "endLine": end,
+            "scopes": scopes,
+            "rows": rows,
+            "plainText": plain,
+        }
+        legacy[legacy_key(rel_source, "command", str(index))] = item
 
 
 def main() -> int:
@@ -152,13 +270,14 @@ def main() -> int:
     declarations: dict[str, str] = {}
     short_names: dict[str, list[str]] = {}
     files: dict[str, list[str]] = {}
+    legacy_targets: dict[str, dict] = {}
 
-    semantic_files = sorted(semantic_root.rglob("*.json"))
-    for semantic_file in semantic_files:
+    for semantic_file in sorted(semantic_root.rglob("*.json")):
         rel_source = source_path_from_semantic(semantic_file, semantic_root)
         rel_source_text = str(rel_source)
         if source_prefixes and not any(rel_source_text.startswith(prefix) for prefix in source_prefixes):
             continue
+
         source_file = source_root / rel_source
         if not source_file.exists():
             continue
@@ -166,8 +285,9 @@ def main() -> int:
         module = str(rel_source.with_suffix("")).replace("/", ".")
         lines = source_file.read_text(encoding="utf-8").splitlines()
         data = json.loads(semantic_file.read_text(encoding="utf-8"))
+        raw_items = list(data.get("items", []))
 
-        for index, raw in enumerate(data.get("items", [])):
+        for index, raw in enumerate(raw_items):
             start = int(raw.get("startLine") or 1)
             end = int(raw.get("endLine") or start)
             defines = [str(x) for x in raw.get("defines", [])]
@@ -177,7 +297,7 @@ def main() -> int:
             item = {
                 "id": item_id,
                 "module": module,
-                "file": str(rel_source),
+                "file": rel_source_text,
                 "kind": str(raw.get("kind", "")),
                 "defines": defines,
                 "primaryDeclaration": defines[0] if defines else None,
@@ -188,16 +308,17 @@ def main() -> int:
                 "plainText": plain_text,
             }
             items[item_id] = item
-            files.setdefault(str(rel_source), []).append(item_id)
+            files.setdefault(rel_source_text, []).append(item_id)
 
             for name in defines:
                 declarations[name] = item_id
-                short = name.rsplit(".", 1)[-1]
-                short_names.setdefault(short, []).append(item_id)
+                short_names.setdefault(name.rsplit(".", 1)[-1], []).append(item_id)
+
+        add_legacy_targets(legacy_targets, rel_source_text, module, lines, raw_items)
 
     manifest = {
-        "schemaVersion": 2,
-        "generator": "notion-viewer-v2",
+        "schemaVersion": 3,
+        "generator": "notion-viewer",
         "siteTitle": str(config.get("siteTitle", "Lean Notion Viewer")),
         "sourcePrefixes": source_prefixes,
         "github": {
@@ -208,6 +329,7 @@ def main() -> int:
         "declarations": declarations,
         "shortNames": short_names,
         "files": files,
+        "legacyTargets": legacy_targets,
     }
 
     output.joinpath("data", "manifest.json").write_text(

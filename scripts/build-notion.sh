@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUT="${1:-_out/notion-v2}"
+OUT="${1:-_out/site/notion}"
 SEMANTIC_TMP="$OUT/.semantic"
 
 rm -rf "$OUT"
@@ -17,23 +17,23 @@ while IFS= read -r src; do
   lake exe notion-highlight-export "$src" "$dst"
 done < <(find .lake/build/highlighted/SerreNumberTheory -type f -name '*.json' | sort)
 
-NOTION_V2_PROOF_STATUS="$OUT/proof-status.json" lake env lean NotionProofStatusExport.lean
+NOTION_PROOF_STATUS="$OUT/proof-status.json" lake env lean NotionProofStatusExport.lean
 
-python3 scripts/build-notion-v2.py \
+python3 scripts/build-notion.py \
   --semantic-root "$SEMANTIC_TMP" \
   --output "$OUT" \
   --source-root . \
-  --config notion-v2/config.json
+  --config notion/config.json
 
-cp notion-v2/index.html "$OUT/index.html"
-cp notion-v2/config.json "$OUT/config.json"
-cp notion-v2/viewer.css "$OUT/viewer.css"
-cp notion-v2/viewer.js "$OUT/viewer.js"
-cp notion-v2/infoview.css "$OUT/infoview.css"
-cp notion-v2/infoview.js "$OUT/infoview.js"
-cp notion-v2/link/index.html "$OUT/link/index.html"
-cp notion-v2/link/link.css "$OUT/link/link.css"
-cp notion-v2/link/link.js "$OUT/link/link.js"
+cp notion/index.html "$OUT/index.html"
+cp notion/config.json "$OUT/config.json"
+cp notion/viewer.css "$OUT/viewer.css"
+cp notion/viewer.js "$OUT/viewer.js"
+cp notion/infoview.css "$OUT/infoview.css"
+cp notion/infoview.js "$OUT/infoview.js"
+cp notion/link/index.html "$OUT/link/index.html"
+cp notion/link/link.css "$OUT/link/link.css"
+cp notion/link/link.js "$OUT/link/link.js"
 
 printf '{"commit":"%s"}\n' "${GITHUB_SHA:-local}" > "$OUT/build-version.json"
 
@@ -46,15 +46,22 @@ python3 - "$OUT/data/manifest.json" <<'PY'
 import json
 import sys
 from pathlib import Path
+
 p = Path(sys.argv[1])
 data = json.loads(p.read_text())
-assert data["schemaVersion"] == 2
+assert data["schemaVersion"] == 3
 assert data["items"], "manifest contains no Lean items"
 assert data["declarations"], "manifest contains no declarations"
+assert "legacyTargets" in data, "legacy URL compatibility data is missing"
 prefixes = data.get("sourcePrefixes", [])
 assert prefixes, "manifest sourcePrefixes is empty"
-assert all(any(item["file"].startswith(p) for p in prefixes) for item in data["items"].values())
-print(f"Notion Viewer v2 manifest: {len(data['items'])} items, {len(data['declarations'])} declarations")
+assert all(any(item["file"].startswith(prefix) for prefix in prefixes) for item in data["items"].values())
+print(
+    "Notion Viewer manifest: "
+    f"{len(data['items'])} items, "
+    f"{len(data['declarations'])} declarations, "
+    f"{len(data['legacyTargets'])} legacy targets"
+)
 PY
 
 rm -rf "$SEMANTIC_TMP"

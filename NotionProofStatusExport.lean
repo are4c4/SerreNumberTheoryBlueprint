@@ -33,6 +33,6 @@ run_cmd do
     ("theorems", .arr entries)
   ]
   let output :=
-    (← liftIO <| IO.getEnv "NOTION_V2_PROOF_STATUS")
+    (← liftIO <| IO.getEnv "NOTION_PROOF_STATUS")
       |>.getD "_out/notion-v2/proof-status.json"
   liftIO <| IO.FS.writeFile output (toString out)

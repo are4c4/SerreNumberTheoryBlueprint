@@ -29,6 +29,31 @@
     const decl = params.get('decl');
     const file = params.get('file');
     const line = Number(params.get('line'));
+    const section = params.get('section');
+    const namespaceName = params.get('namespace');
+    const command = params.get('command');
+
+    const legacy = [
+      ['section', section],
+      ['namespace', namespaceName],
+      ['command', command],
+    ].filter(([, value]) => value);
+
+    if (legacy.length > 1) {
+      throw new Error('Specify only one legacy target: section, namespace, or command.');
+    }
+
+    if (legacy.length === 1) {
+      const [kind, name] = legacy[0];
+      const entries = Object.entries(manifest.legacyTargets || {});
+      const suffix = '\u001f' + kind + '\u001f' + name;
+      const candidates = entries
+        .filter(([key, item]) => key.endsWith(suffix) && (!file || item.file === file))
+        .map(([, item]) => item);
+      if (candidates.length === 1) return candidates[0];
+      if (!candidates.length) throw new Error(`${kind} "${name}" was not found.`);
+      throw new Error(`${kind} "${name}" is ambiguous; include ?file=... in the URL.`);
+    }
 
     if (decl) {
       let id = manifest.declarations[decl];
@@ -56,7 +81,7 @@
       throw new Error(`No Lean item was found near ${file}:${line}.`);
     }
 
-    throw new Error('Specify ?decl=Full.Name or ?file=...&line=....');
+    throw new Error('Specify ?decl=Full.Name, ?file=...&line=..., or a legacy section/namespace/command target.');
   }
 
   function updateScopes(scopes) {
