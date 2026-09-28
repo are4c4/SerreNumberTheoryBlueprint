@@ -12,7 +12,7 @@ export function proofGutterMarker(proofState) {
   const title = proved ? "Proved: Lean kernel dependency check detected no sorryAx dependency." : "Incomplete: this theorem transitively depends on sorryAx.";
   const label = proved ? "Proved" : "Incomplete";
   const mark = proved
-    ? '<svg viewBox="0 0 20 12" aria-hidden="true" focusable="false"><path d="M1.3 6.1 4.1 8.9 9.0 3.2"/><path d="M7.1 6.1 10.0 8.9 18.5 1.3"/></svg>'
+    ? '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.6 8.4 3.7 10.5 7.4 6.5"/><path d="M6.3 8.4 8.5 10.5 13.9 5.4"/></svg>'
     : "!";
   return '<span class="proof-gutter-marker ' + className + '" title="' + escapeHtml(title) + '" aria-label="' + escapeHtml(label) + '">' + mark + "</span>";
 }

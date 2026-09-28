@@ -25,4 +25,5 @@ test("proved gutter marker uses the compact VS Code-style double check", () => {
   const cells = proofGutterCells({startLine:10}, [{line:10}], {status:"proved"});
   assert.match(cells[0], /<svg/);
   assert.equal((cells[0].match(/<path /g) || []).length, 2);
+  assert.match(cells[0], /viewBox="0 0 16 16"/);
 });

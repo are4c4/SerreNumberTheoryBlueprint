@@ -24,3 +24,9 @@ test("bracket pair depth cycles like VS Code bracket pair colorization", () => {
   assert.equal(bracketDepthClass(")", state), "bracket-depth-1");
   assert.equal(bracketDepthClass(")", state), "bracket-depth-0");
 });
+
+test("popup highlighter adds bracket depth classes", () => {
+  const html = highlightLeanText("F (G x)");
+  assert.match(html, /lean-hl-bracket bracket-depth-0/);
+  assert.match(html, /lean-hl-bracket bracket-depth-1/);
+});
