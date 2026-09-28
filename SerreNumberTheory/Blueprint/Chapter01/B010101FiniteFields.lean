@@ -1,19 +1,3 @@
-/-
-webページを確認する方法
-
-ターミナルで次を実行（ローカルサーバー）
-lake exe vbp build
-python3 -m http.server 8000 --directory _out/site/html-multi
-open http://localhost:8000/
-
-停止する時はCtrl+C
-
-内容を更新する時は
-lake exe vbp build
-をした後にブラウザを更新する
--/
-
-
 import Verso
 import VersoManual
 import VersoBlueprint
@@ -24,12 +8,6 @@ open Verso.Genre
 open Verso.Genre.Manual
 open Informal
 
-
-/-
-Manualという文書形式を使って、
-タイトルが" "であるVerso文書を作成し、
-以下にその本文を記述する。
--/
 #doc (Manual) "有限体" =>
 
 # 有限体の性質
