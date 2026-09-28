@@ -1,10 +1,10 @@
 import { escapeHtml } from "./html.mjs";
 
 const leanKeywords = new Set(["import","open","namespace","section","end","variable","variables","universe","include","omit","where","by","fun","in","let","if","then","else","match","with","theorem","lemma","def","abbrev","example","instance","structure","class","inductive","noncomputable","private","protected","local","exact","intro","apply","rw","simp","constructor","rcases","rintro","have","show","from","calc","using","at"]);
-const leanTypes = new Set(["Type","Prop","Sort","Nat","Int","Rat","Bool","String","Unit","Fin","Field","Fintype","CharP","DecidableEq","MvPolynomial","Polynomial","Module","ZMod","Set","List","Option","Subtype","Fact","Prime"]);
+const leanTypes = new Set(["Type","Prop","Sort","Nat","Int","Rat","Bool","String","Unit","Fin","Field","Fintype","CharP","DecidableEq","MvPolynomial","Polynomial","Module","ZMod","Set","List","Option","Subtype","Fact","Prime","ℕ","ℤ","ℚ","ℝ","ℂ"]);
 const leanLiterals = new Set(["true","false"]);
-const leanTokenPattern = /:=|=>|->|<-|≤|≥|≠|⊢|∀|∃|λ|[A-Za-z_][A-Za-z0-9_'.]*|\d+|[()[\]{}:,.^=+\-*\/|]/g;
-const punctuationPattern = /^(?::=|=>|->|<-|≤|≥|≠|⊢|∀|∃|λ|[()[\]{}:,.^=+\-*\/|])$/;
+const leanTokenPattern = /:=|=>|->|<-|≤|≥|≠|⊢|∀|∃|λ|[\p{L}_][\p{L}\p{N}_']*(?:\.[\p{L}_][\p{L}\p{N}_']*)*|\d+|[()[\]{}:,.^=+\-*\/|]/gu;
+const punctuationPattern = /^(?::=|=>|->|<-|≤|≥|≠|⊢|∀|∃|λ|[()[\]{}:,.^=+\-*\/|])$/u;
 const bracketTokens = new Set(["(", ")", "[", "]", "{", "}"]);
 const openingBrackets = new Set(["(", "[", "{"]);
 const closingBrackets = new Set([")", "]", "}"]);
@@ -14,8 +14,8 @@ export function classifyLeanWord(token) {
   if (leanTypes.has(token) || /^(?:Type|Sort)_?u?_?\d*$/.test(token)) return "type";
   if (leanLiterals.has(token) || /^\d+$/.test(token)) return "literal";
   if (/^inst/.test(token)) return "implicit";
-  if (/^[A-Za-z]$/.test(token) || /^[a-z][A-Za-z0-9_']*$/.test(token)) return "var";
-  if (/^[A-Z][A-Za-z0-9_']*(?:\.[A-Za-z0-9_']+)*$/.test(token)) return "const";
+  if (/^[\p{L}_][\p{L}\p{N}_']*$/u.test(token) && /^[a-z_]/.test(token)) return "var";
+  if (/^[\p{Lu}][\p{L}\p{N}_']*(?:\.[\p{L}_][\p{L}\p{N}_']*)*$/u.test(token)) return "const";
   return "ident";
 }
 
@@ -33,20 +33,48 @@ function mapTokens(raw, renderToken) {
   return out + escapeHtml(text.slice(last));
 }
 
-function renderHighlightedToken(token, cls, bracketState) {
-  if (bracketTokens.has(token)) {
-    const depthClass = bracketDepthClass(token, bracketState);
-    return '<span class="lean-hl-punct lean-hl-bracket ' + depthClass + '">' + escapeHtml(token) + "</span>";
-  }
-  return '<span class="lean-hl-' + cls + '">' + escapeHtml(token) + "</span>";
+export function bracketDepthClass(token, state) {
+  if (!bracketTokens.has(token)) return "";
+  const holder = state || {depth:0};
+  if (closingBrackets.has(token)) holder.depth = Math.max(0, holder.depth - 1);
+  const depthClass = "bracket-depth-" + (holder.depth % 3);
+  if (openingBrackets.has(token)) holder.depth += 1;
+  return depthClass;
 }
 
-export function highlightLeanText(text) {
+function isDeclarationToken(token, declarationName) {
+  const name = String(declarationName || "").trim();
+  if (!name) return false;
+  const shortName = name.split(".").at(-1) || name;
+  return token === name || token === shortName || name.endsWith("." + token);
+}
+
+function fallbackTokenHtml(token, bracketState, declarationName) {
+  if (bracketTokens.has(token)) {
+    const depthClass = bracketDepthClass(token, bracketState);
+    return '<span class="lean-token bracket ' + depthClass + '">' + escapeHtml(token) + "</span>";
+  }
+  if (isDeclarationToken(token, declarationName)) {
+    return '<span class="lean-token declaration definition-site">' + escapeHtml(token) + "</span>";
+  }
+  const cls = punctuationPattern.test(token) ? "punct" : classifyLeanWord(token);
+  if (cls === "keyword") return '<span class="lean-token keyword">' + escapeHtml(token) + "</span>";
+  if (cls === "type") return '<span class="lean-token type-like">' + escapeHtml(token) + "</span>";
+  if (cls === "literal") return '<span class="lean-token literal">' + escapeHtml(token) + "</span>";
+  if (cls === "var") return '<span class="lean-token var">' + escapeHtml(token) + "</span>";
+  if (cls === "implicit") return '<span class="lean-token variable-token">' + escapeHtml(token) + "</span>";
+  if (cls === "const") return '<span class="lean-token const">' + escapeHtml(token) + "</span>";
+  if (cls === "punct") return '<span class="lean-token operator">' + escapeHtml(token) + "</span>";
+  return '<span class="lean-token">' + escapeHtml(token) + "</span>";
+}
+
+export function highlightLeanText(text, options = {}) {
   const bracketState = {depth:0};
-  return mapTokens(text, token => {
-    const cls = punctuationPattern.test(token) ? "punct" : classifyLeanWord(token);
-    return renderHighlightedToken(token, cls, bracketState);
-  });
+  return mapTokens(text, token => fallbackTokenHtml(token, bracketState, options.declarationName));
+}
+
+export function highlightLeanSignature(text, declarationName) {
+  return highlightLeanText(text, {declarationName});
 }
 
 export function highlightLeanDocCommentLine(text) {
@@ -62,28 +90,13 @@ export function highlightLeanDocCommentLine(text) {
   return html + escapeHtml(raw.slice(last));
 }
 
-export function bracketDepthClass(token, state) {
-  if (!bracketTokens.has(token)) return "";
-  const holder = state || {depth:0};
-  if (closingBrackets.has(token)) holder.depth = Math.max(0, holder.depth - 1);
-  const depthClass = "bracket-depth-" + (holder.depth % 3);
-  if (openingBrackets.has(token)) holder.depth += 1;
-  return depthClass;
-}
-
 export function syntaxHighlightLeanLine(text) {
   const raw = String(text ?? "");
   if (!raw) return "";
   const commentStart = raw.indexOf("--");
   const code = commentStart >= 0 ? raw.slice(0, commentStart) : raw;
   const comment = commentStart >= 0 ? raw.slice(commentStart) : "";
-  const highlighted = mapTokens(code, token => {
-    const cls = classifyLeanWord(token);
-    if (bracketTokens.has(token)) return '<span class="lean-token punctuation bracket">' + escapeHtml(token) + "</span>";
-    if (cls === "keyword") return '<span class="lean-token keyword">' + escapeHtml(token) + "</span>";
-    if (cls === "type") return '<span class="lean-token type-like">' + escapeHtml(token) + "</span>";
-    if (cls === "literal") return '<span class="lean-token literal">' + escapeHtml(token) + "</span>";
-    return escapeHtml(token);
-  });
+  const bracketState = {depth:0};
+  const highlighted = mapTokens(code, token => fallbackTokenHtml(token, bracketState, ""));
   return comment ? highlighted + '<span class="lean-token comment">' + escapeHtml(comment) + "</span>" : highlighted;
 }

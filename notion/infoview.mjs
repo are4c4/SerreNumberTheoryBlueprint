@@ -1,5 +1,5 @@
 import { decodeMeta, escapeHtml } from "./lib/html.mjs";
-import { highlightLeanText } from "./lib/highlight.mjs";
+import { bracketDepthClass, highlightLeanDocCommentLine, highlightLeanSignature, highlightLeanText } from "./lib/highlight.mjs";
 
 const viewer = document.querySelector(".viewer");
 if (viewer) {
@@ -43,38 +43,81 @@ if (viewer) {
   function pre(text, options = {}) {
     const node = document.createElement("pre");
     node.className = "lean-infoview-pre lean-code-highlight" + (options.className ? " " + options.className : "");
-    node.innerHTML = options.highlight === false ? escapeHtml(text) : highlightLeanText(text);
+    node.innerHTML = options.highlight === false
+      ? escapeHtml(text)
+      : highlightLeanSignature(text, options.declarationName || "");
     body.appendChild(node);
     return node;
   }
   function renderTooltip({name,signature,docs,proofHint}) {
     const sections = [];
-    if (name) sections.push('<div class="lean-tooltip-title">' + highlightLeanText(name) + "</div>");
-    if (signature) sections.push('<pre class="lean-tooltip-code lean-code-highlight">' + highlightLeanText(signature) + "</pre>");
-    if (docs) sections.push('<div class="lean-tooltip-docs">' + escapeHtml(docs) + "</div>");
+    if (name) sections.push('<div class="lean-tooltip-title lean-code-highlight">' + highlightLeanSignature(name, name) + "</div>");
+    if (signature) sections.push('<pre class="lean-tooltip-code lean-code-highlight">' + highlightLeanSignature(signature, name) + "</pre>");
+    if (docs) sections.push('<div class="lean-tooltip-docs doc-comment-line">' + highlightLeanDocCommentLine(docs) + "</div>");
     if (proofHint) sections.push('<div class="lean-tooltip-hint">' + escapeHtml(proofHint) + "</div>");
     return sections.join("");
   }
   function showToken(target) {
+    const constName = decodeMeta(target.dataset.constName || target.textContent.trim());
     kind.textContent = target.dataset.semantic || "info";
-    title.textContent = decodeMeta(target.dataset.constName || target.textContent.trim());
+    title.innerHTML = highlightLeanSignature(constName, constName);
+    title.classList.add("lean-code-highlight");
     body.replaceChildren();
-    if (target.dataset.signature) { label("Type"); pre(decodeMeta(target.dataset.signature)); }
+    if (target.dataset.signature) {
+      label("Type");
+      pre(decodeMeta(target.dataset.signature), {declarationName:constName});
+    }
     if (target.dataset.docs) {
       label("Documentation");
       const docs = document.createElement("div");
-      docs.className = "lean-infoview-docs";
-      docs.textContent = decodeMeta(target.dataset.docs);
+      docs.className = "lean-infoview-docs doc-comment-line";
+      docs.innerHTML = highlightLeanDocCommentLine(decodeMeta(target.dataset.docs));
       body.appendChild(docs);
     }
     if (!target.dataset.signature && !target.dataset.docs) pre(target.textContent.trim());
     panel.dataset.mode = "info";
     panel.hidden = false;
   }
+  const semanticOperators = new Set([":", ":=", "=", "^", "+", "-", "*", "/", "→", "↔", "≠", "≤", "≥", "<", ">", "∈", "∉", "⊆", "∧", "∨"]);
+  const semanticBrackets = new Set(["(", ")", "[", "]", "{", "}"]);
+
+  function normalizeSemanticHtml(html) {
+    if (!html) return "";
+    const template = document.createElement("template");
+    template.innerHTML = html;
+    const bracketState = {depth:0};
+    template.content.querySelectorAll(".lean-token").forEach(token => {
+      const text = token.textContent || "";
+      if (/^\d+$/.test(text)) {
+        token.classList.remove("unknown", "const");
+        token.classList.add("literal", "number");
+        return;
+      }
+      if (semanticBrackets.has(text)) {
+        token.classList.remove("unknown", "const", "operator");
+        token.classList.add("bracket");
+        const depthClass = bracketDepthClass(text, bracketState);
+        if (depthClass) token.classList.add(depthClass);
+        return;
+      }
+      if (semanticOperators.has(text)) {
+        token.classList.remove("unknown", "const");
+        token.classList.add("operator");
+      }
+    });
+    return template.innerHTML;
+  }
+
   function hypothesisHtml(hypothesis) {
     const names = Array.isArray(hypothesis.names) ? hypothesis.names.join(" ") : "";
-    const namesHtml = names ? '<span class="lean-hl-var lean-hl-hyp-name">' + escapeHtml(names) + '</span><span class="lean-hl-punct"> : </span>' : "";
-    return namesHtml + highlightLeanText(hypothesis.type || "");
+    const namesHtml = hypothesis.namesHtml
+      ? normalizeSemanticHtml(hypothesis.namesHtml)
+      : (names ? '<span class="lean-token var">' + escapeHtml(names) + "</span>" : "");
+    const separator = namesHtml ? '<span class="lean-token operator"> : </span>' : "";
+    const typeHtml = hypothesis.typeHtml
+      ? normalizeSemanticHtml(hypothesis.typeHtml)
+      : highlightLeanText(hypothesis.type || "");
+    return namesHtml + separator + typeHtml;
   }
   function showGoals(marker, sourceLabel = "カーソル位置の証明状態") {
     let goals = [];
@@ -105,7 +148,7 @@ if (viewer) {
       });
       const conclusion = document.createElement("div");
       conclusion.className = "lean-infoview-turnstile lean-code-highlight";
-      conclusion.innerHTML = '<span class="lean-hl-turnstile">' + escapeHtml(goal.goalPrefix || "⊢") + "</span> " + highlightLeanText(goal.conclusion || "");
+      conclusion.innerHTML = '<span class="lean-hl-turnstile">' + escapeHtml(goal.goalPrefix || "⊢") + "</span> " + (goal.conclusionHtml ? normalizeSemanticHtml(goal.conclusionHtml) : highlightLeanText(goal.conclusion || ""));
       block.appendChild(conclusion);
       body.appendChild(block);
     });
