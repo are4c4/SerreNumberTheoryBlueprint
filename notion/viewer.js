@@ -36,10 +36,50 @@
     return `${highlightedCode}<span class="lean-token comment">${esc(comment)}</span>`;
   }
 
+  const qualifiedIdentifierPattern = /^[A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z_][A-Za-z0-9_']*)+$/;
+
+  function classifyLeanToken(token) {
+    const semantic = token.dataset.semantic || '';
+    if (semantic) token.classList.add(`semantic-${semantic}`);
+    if (semantic === 'variable') token.classList.add('variable-token');
+
+    const text = token.textContent || '';
+    if ((semantic === 'const' || semantic === 'constructor') && token.dataset.definitionSite === 'true') {
+      token.classList.add('definition-site');
+    }
+
+    if ((semantic === 'const' || semantic === 'constructor') && qualifiedIdentifierPattern.test(text)) {
+      const lastDot = text.lastIndexOf('.');
+      const prefix = document.createElement('span');
+      prefix.className = 'lean-qualified-prefix';
+      prefix.textContent = text.slice(0, lastDot);
+      const dot = document.createElement('span');
+      dot.className = 'lean-qualified-dot';
+      dot.textContent = '.';
+      const member = document.createElement('span');
+      member.className = 'lean-qualified-member';
+      member.textContent = text.slice(lastDot + 1);
+      token.classList.add('qualified-const');
+      token.replaceChildren(prefix, dot, member);
+      return;
+    }
+
+    if ((semantic === 'const' || semantic === 'constructor') && /^[A-ZΑ-Ω]/u.test(text)) {
+      token.classList.add('type-const');
+    }
+  }
+
+  function improveLeanTokenHtml(html) {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    template.content.querySelectorAll('.lean-token').forEach(classifyLeanToken);
+    return template.innerHTML;
+  }
+
   function rowHtml(row) {
     const rendered = String(row.html || '');
-    if (rendered.includes('lean-token')) return rendered;
-    return syntaxHighlightLeanLine(row.text || '');
+    const html = rendered.includes('lean-token') ? rendered : syntaxHighlightLeanLine(row.text || '');
+    return improveLeanTokenHtml(html);
   }
 
   async function getJson(path) {
