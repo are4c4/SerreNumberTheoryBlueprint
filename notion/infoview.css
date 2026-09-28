@@ -62,8 +62,8 @@
 .lean-infoview-tooltip {
   position: fixed;
   z-index: 10000;
-  max-width: min(620px, calc(100vw - 24px));
-  padding: 9px 11px;
+  max-width: min(720px, calc(100vw - 24px));
+  padding: 0;
   border: 1px solid #4a4a4a;
   border-radius: 7px;
   background: #252526;
@@ -71,8 +71,40 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
   pointer-events: none;
   font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow: hidden;
+}
+
+.lean-tooltip-title {
+  padding: 9px 11px 6px;
+  color: #d4d4d4;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.lean-tooltip-code {
+  margin: 0;
+  padding: 8px 11px;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  background: rgba(0, 0, 0, .14);
+  color: #d4d4d4;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.lean-tooltip-docs,
+.lean-tooltip-hint {
+  padding: 8px 11px;
+  border-top: 1px solid rgba(255, 255, 255, .08);
+  color: #c8c8c8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.55;
+}
+
+.lean-tooltip-hint {
+  color: #b5cea8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .lean-infoview-panel {
@@ -103,6 +135,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .lean-infoview-kind {
@@ -113,11 +146,15 @@
   font: 10px ui-monospace, SFMono-Regular, Menlo, monospace;
   text-transform: uppercase;
   letter-spacing: .06em;
+  flex-shrink: 0;
 }
 
 .lean-infoview-title {
   color: #e7e7e7;
   font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .lean-infoview-close {
@@ -161,6 +198,17 @@
   overflow-wrap: anywhere;
 }
 
+.lean-code-highlight .lean-hl-keyword { color: #c586c0; font-weight: 600; }
+.lean-code-highlight .lean-hl-type { color: #4ec9b0; }
+.lean-code-highlight .lean-hl-literal { color: #b5cea8; }
+.lean-code-highlight .lean-hl-var { color: #ffd866; font-weight: 600; }
+.lean-code-highlight .lean-hl-hyp-name { color: #ffd866; }
+.lean-code-highlight .lean-hl-implicit { color: #858585; font-style: italic; }
+.lean-code-highlight .lean-hl-const { color: #d4d4d4; }
+.lean-code-highlight .lean-hl-ident { color: #d4d4d4; }
+.lean-code-highlight .lean-hl-punct { color: #8c8c8c; }
+.lean-code-highlight .lean-hl-turnstile { color: #569cd6; font-weight: 700; }
+
 .lean-infoview-docs {
   margin: 0 0 12px;
   color: #c8c8c8;
@@ -183,7 +231,7 @@
 
 .lean-infoview-turnstile {
   margin-top: 8px;
-  color: #dcdcaa;
+  color: #d4d4d4;
   font: 600 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
   white-space: pre-wrap;
 }
