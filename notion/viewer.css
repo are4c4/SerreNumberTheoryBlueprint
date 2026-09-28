@@ -116,3 +116,91 @@ pre{margin:0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1
   .inline-proof-status{left:-3.72em;width:1.35em}
   .inline-proof-status::before{font-size:16px}
 }
+
+/* 20260928: closer to the user's VS Code Dark+ Lean colors. */
+:root{
+  --keyword:#ff7b72;
+  --decl:#c586c0;
+  --type:#ff7b72;
+  --literal:#b5cea8;
+  --comment:#8b949e;
+  --punct:#ffd700;
+}
+.lean-token.keyword,
+.lean-token.built-in{
+  color:#ff7b72!important;
+  font-weight:500;
+}
+.lean-token.declaration,
+.lean-token.definition-site,
+.lean-token.qualified-const.definition-site .lean-qualified-member{
+  color:#c586c0!important;
+  font-weight:500;
+}
+.lean-token.type-like,
+.lean-token.sort{
+  color:#ff7b72!important;
+  font-weight:500;
+}
+.lean-token.literal,
+.lean-token.number,
+.lean-token.semantic-number{
+  color:#b5cea8!important;
+}
+.lean-token.comment,
+.lean-token.doc-comment,
+.lean-token.semantic-comment,
+.lean-token.semantic-doc-comment,
+.doc-comment-line,
+.doc-comment-line *{
+  color:#8b949e!important;
+  font-style:normal!important;
+}
+.lean-token.var,
+.lean-token.variable-token,
+.lean-token.wildcard,
+.lean-token.typed,
+.lean-token.function-like,
+.lean-token.const,
+.lean-token.option,
+.lean-token.semantic-const,
+.lean-token.semantic-constructor,
+.lean-token.constant-like,
+.lean-token.predicate-like,
+.lean-token.member-like,
+.lean-token.type-const,
+.lean-token.qualified-const,
+.lean-qualified-prefix,
+.lean-qualified-dot,
+.lean-qualified-member{
+  color:#d4d4d4!important;
+  font-weight:400;
+}
+.lean-token.operator,
+.lean-token.separator,
+.lean-token.bracket,
+.lean-token.delimiter{
+  color:#ffd700!important;
+  font-weight:400;
+}
+.line-nos{
+  min-width:5.9em;
+  padding-left:2.35em;
+  padding-right:10px;
+}
+.inline-proof-status{
+  left:-5.65em;
+  width:2.05em;
+  height:1.45em;
+  transform:translateY(-.04em);
+}
+.inline-proof-status::before{
+  color:#3794ff!important;
+  font:900 22px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  text-shadow:none;
+}
+@media (max-width:430px){
+  .line-nos{min-width:5.2em;padding-left:1.9em;padding-right:8px}
+  .inline-proof-status{left:-4.98em;width:1.8em}
+  .inline-proof-status::before{font-size:20px}
+}
